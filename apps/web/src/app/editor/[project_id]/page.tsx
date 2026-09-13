@@ -15,17 +15,20 @@ import { EditorProvider } from "@/components/providers/editor-provider";
 import { Onboarding } from "@/components/editor/onboarding";
 import { MigrationDialog } from "@/components/editor/dialogs/migration-dialog";
 import { usePanelStore } from "@/stores/panel-store";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileEditorLayout } from "@/components/editor/mobile/mobile-editor-layout";
 
 export default function Editor() {
 	const params = useParams();
 	const projectId = params.project_id as string;
+	const isMobile = useIsMobile();
 
 	return (
 		<EditorProvider projectId={projectId}>
 			<div className="bg-background flex h-screen w-screen flex-col overflow-hidden">
 				<EditorHeader />
 				<div className="min-h-0 min-w-0 flex-1">
-					<EditorLayout />
+					{isMobile ? <MobileEditorLayout /> : <EditorLayout />}
 				</div>
 				<Onboarding />
 				<MigrationDialog />

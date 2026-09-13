@@ -56,6 +56,10 @@ import {
 import { DeleteProjectDialog } from "@/components/editor/dialogs/delete-project-dialog";
 import { ProjectInfoDialog } from "@/components/editor/dialogs/project-info-dialog";
 import { RenameProjectDialog } from "@/components/editor/dialogs/rename-project-dialog";
+import {
+	MobileTabBar,
+	MobileTabBarSpacer,
+} from "@/components/mobile/mobile-tab-bar";
 import { cn } from "@/utils/ui";
 
 const formatProjectDuration = ({
@@ -118,6 +122,8 @@ export default function ProjectsPage() {
 					</div>
 				)}
 			</main>
+			<MobileTabBarSpacer />
+			<MobileTabBar />
 		</div>
 	);
 }
@@ -126,10 +132,11 @@ function ProjectsHeader() {
 	const { viewMode, isHydrated, setViewMode } = useProjectsStore();
 
 	return (
-		<header className="sticky top-0 z-20 px-8 bg-background flex flex-col gap-2">
+		<header className="sticky top-0 z-20 px-4 md:px-8 bg-background flex flex-col gap-2">
 			<div className="flex items-center justify-between h-16 pt-2">
 				<div className="flex items-center gap-5">
-					<Breadcrumb>
+					<h1 className="text-xl font-semibold md:hidden">Проекты</h1>
+					<Breadcrumb className="hidden md:block">
 						<BreadcrumbList>
 							<BreadcrumbItem>
 								<BreadcrumbLink asChild>
@@ -222,7 +229,7 @@ function ProjectsToolbar({ projectIds }: { projectIds: string[] }) {
 	};
 
 	return (
-		<div className="sticky top-16 z-10 flex items-center justify-between px-6 h-14 pt-2 bg-background">
+		<div className="sticky top-16 z-10 flex items-center justify-between px-4 md:px-6 h-14 pt-2 bg-background">
 			<div className="flex items-center gap-2">
 				<Label
 					className="flex items-center gap-3 cursor-pointer px-2"
@@ -605,7 +612,7 @@ function ProjectItem({
 
 	const listRowContent = (
 		<div className="flex items-center gap-3 flex-1 min-w-0">
-			<div className="bg-muted relative size-10 rounded overflow-hidden shrink-0">
+			<div className="bg-muted relative size-14 sm:size-10 rounded-lg sm:rounded overflow-hidden shrink-0">
 				{project.thumbnail ? (
 					<Image
 						src={project.thumbnail}
@@ -618,11 +625,21 @@ function ProjectItem({
 						<OcVideoIcon className="text-muted-foreground size-5 shrink-0" />
 					</div>
 				)}
+				{durationLabel && (
+					<div className="absolute bottom-0.5 right-0.5 bg-black/60 text-white text-[0.6rem] font-medium px-1 rounded-sm sm:hidden">
+						{durationLabel}
+					</div>
+				)}
 			</div>
 
-			<h3 className="group-hover:text-foreground/90 text-sm font-medium truncate flex-1 min-w-0">
-				{project.name}
-			</h3>
+			<div className="flex flex-col min-w-0 flex-1 gap-0.5">
+				<h3 className="group-hover:text-foreground/90 text-sm font-medium truncate">
+					{project.name}
+				</h3>
+				<span className="text-muted-foreground text-xs sm:hidden">
+					{formatDate({ date: project.createdAt })}
+				</span>
+			</div>
 
 			<span className="text-muted-foreground text-sm shrink-0 hidden sm:block">
 				{durationLabel ?? "—"}

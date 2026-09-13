@@ -154,7 +154,7 @@ function ExportPopover({
 	};
 
 	return (
-		<PopoverContent className="bg-background mr-4 flex w-80 flex-col gap-3">
+		<PopoverContent className="bg-background mr-4 flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-3">
 			{exportResult && !exportResult.success ? (
 				<ExportError
 					error={exportResult.error || "Unknown error occurred"}
