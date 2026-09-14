@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { MigrationDialog } from "@/components/editor/dialogs/migration-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,17 +22,6 @@ import { formatTimeCode } from "@/lib/time";
 import { formatDate } from "@/utils/date";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbPage,
-	BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import {
-	Calendar04Icon,
-	GridViewIcon,
-	LeftToRightListDashIcon,
 	PlusSignIcon,
 	Search01Icon,
 	Video01Icon,
@@ -45,7 +33,6 @@ import {
 	InformationCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { OcVideoIcon } from "@opencut/ui/icons";
-import { Label } from "@/components/ui/label";
 import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
@@ -56,11 +43,8 @@ import {
 import { DeleteProjectDialog } from "@/components/editor/dialogs/delete-project-dialog";
 import { ProjectInfoDialog } from "@/components/editor/dialogs/project-info-dialog";
 import { RenameProjectDialog } from "@/components/editor/dialogs/rename-project-dialog";
-import {
-	MobileTabBar,
-	MobileTabBarSpacer,
-} from "@/components/mobile/mobile-tab-bar";
-import { cn } from "@/utils/ui";
+import { AppFrame } from "@/components/mobile/app-frame";
+import { MobileTabBar } from "@/components/mobile/mobile-tab-bar";
 
 const formatProjectDuration = ({
 	duration,
@@ -76,7 +60,7 @@ const formatProjectDuration = ({
 };
 
 export default function ProjectsPage() {
-	const { searchQuery, sortKey, sortOrder, viewMode } = useProjectsStore();
+	const { searchQuery, sortKey, sortOrder } = useProjectsStore();
 	const editor = useEditor();
 
 	useEffect(() => {
@@ -95,275 +79,157 @@ export default function ProjectsPage() {
 	const isInitialized = editor.project.getIsInitialized();
 
 	return (
-		<div className="bg-background min-h-screen">
+		<AppFrame>
 			<MigrationDialog />
-			<ProjectsHeader />
-			<ProjectsToolbar projectIds={projectsToDisplay.map((p) => p.id)} />
-			<main className="mx-auto px-4 pt-2 pb-6 flex flex-col gap-4">
-				{isLoading || !isInitialized ? (
-					<ProjectsSkeleton />
-				) : projectsToDisplay.length === 0 ? (
-					<EmptyState />
-				) : (
-					<div
-						className={
-							viewMode === "grid"
-								? "xs:grid-cols-2 grid grid-cols-1 gap-6 sm:grid-cols-3 lg:grid-cols-4 px-4"
-								: "flex flex-col"
-						}
-					>
-						{projectsToDisplay.map((project) => (
-							<ProjectItem
-								key={project.id}
-								project={project}
-								allProjectIds={projectsToDisplay.map((p) => p.id)}
-							/>
-						))}
-					</div>
-				)}
-			</main>
-			<MobileTabBarSpacer />
+			<div className="flex-1 overflow-y-auto">
+				<ProjectsHeader count={projectsToDisplay.length} />
+				<ProjectsToolbar projectIds={projectsToDisplay.map((p) => p.id)} />
+				<main className="flex flex-col gap-4 pb-6">
+					{isLoading || !isInitialized ? (
+						<ProjectsSkeleton />
+					) : projectsToDisplay.length === 0 ? (
+						<EmptyState />
+					) : (
+						<div className="flex flex-col">
+							{projectsToDisplay.map((project) => (
+								<ProjectItem
+									key={project.id}
+									project={project}
+									allProjectIds={projectsToDisplay.map((p) => p.id)}
+								/>
+							))}
+						</div>
+					)}
+				</main>
+			</div>
 			<MobileTabBar />
-		</div>
+		</AppFrame>
 	);
 }
 
-function ProjectsHeader() {
-	const { viewMode, isHydrated, setViewMode } = useProjectsStore();
-
+function ProjectsHeader({ count }: { count: number }) {
 	return (
-		<header className="sticky top-0 z-20 px-4 md:px-8 bg-background flex flex-col gap-2">
-			<div className="flex items-center justify-between h-16 pt-2">
-				<div className="flex items-center gap-5">
-					<h1 className="text-xl font-semibold md:hidden">Проекты</h1>
-					<Breadcrumb className="hidden md:block">
-						<BreadcrumbList>
-							<BreadcrumbItem>
-								<BreadcrumbLink asChild>
-									<Link href="/" className="text-sm sm:text-base">
-										Home
-									</Link>
-								</BreadcrumbLink>
-							</BreadcrumbItem>
-							<BreadcrumbSeparator />
-							<BreadcrumbItem>
-								<BreadcrumbPage className="text-sm sm:text-base font-medium">
-									All projects
-								</BreadcrumbPage>
-							</BreadcrumbItem>
-						</BreadcrumbList>
-					</Breadcrumb>
-
-					<div className="hidden md:flex rounded-md border p-1 h-10">
-						<button
-							type="button"
-							className={`p-2 rounded-sm cursor-pointer ${isHydrated && viewMode === "grid" ? "bg-accent/75" : ""}`}
-							onClick={() => setViewMode({ viewMode: "grid" })}
-							onKeyDown={(event) =>
-								event.key === "Enter" && setViewMode({ viewMode: "grid" })
-							}
-							aria-label="Grid view"
-							aria-pressed={isHydrated && viewMode === "grid"}
-						>
-							<HugeiconsIcon icon={GridViewIcon} className="size-4" />
-						</button>
-						<button
-							type="button"
-							className={`p-2 rounded-sm cursor-pointer ${isHydrated && viewMode === "list" ? "bg-accent/75" : ""}`}
-							onClick={() => setViewMode({ viewMode: "list" })}
-							onKeyDown={(event) =>
-								event.key === "Enter" && setViewMode({ viewMode: "list" })
-							}
-							aria-label="List view"
-							aria-pressed={isHydrated && viewMode === "list"}
-						>
-							<HugeiconsIcon
-								icon={LeftToRightListDashIcon}
-								className="size-4"
-							/>
-						</button>
-					</div>
+		<header className="bg-background sticky top-0 z-20 flex flex-col gap-3 px-4 pt-6 pb-3">
+			<div className="flex items-center justify-between">
+				<div>
+					<h1 className="text-xl font-semibold">Проекты</h1>
+					{count > 0 && (
+						<p className="text-muted-foreground text-xs">
+							{count} {count === 1 ? "проект" : "проектов"}
+						</p>
+					)}
 				</div>
-
-				<div className="flex items-center gap-3 md:gap-4">
-					<SearchBar className="hidden md:block" />
-					<NewProjectButton />
-				</div>
+				<NewProjectButton />
 			</div>
-			<SearchBar className="block md:hidden mb-4" />
+			<SearchBar />
 		</header>
 	);
 }
 
 const SORT_LABELS: Record<TProjectSortKey, string> = {
-	createdAt: "Created",
-	updatedAt: "Modified",
-	name: "Name",
-	duration: "Duration",
+	createdAt: "Создан",
+	updatedAt: "Изменён",
+	name: "Имя",
+	duration: "Длительность",
 };
 
 function ProjectsToolbar({ projectIds }: { projectIds: string[] }) {
 	const {
 		selectedProjectIds,
+		isSelectMode,
 		sortKey,
 		sortOrder,
 		setSortOrder,
-		setSelectedProjects,
-		clearSelectedProjects,
-		viewMode,
-		setViewMode,
+		setIsSelectMode,
 	} = useProjectsStore();
 
 	const selectedProjectCount = selectedProjectIds.length;
-	const isAllSelected =
-		projectIds.length > 0 && selectedProjectCount === projectIds.length;
-	const hasSomeSelected =
-		selectedProjectCount > 0 && selectedProjectCount < projectIds.length;
-
-	const handleSelectAll = ({ checked }: { checked: boolean }) => {
-		if (checked) {
-			setSelectedProjects({ projectIds });
-			return;
-		}
-		clearSelectedProjects();
-	};
 
 	return (
-		<div className="sticky top-16 z-10 flex items-center justify-between px-4 md:px-6 h-14 pt-2 bg-background">
-			<div className="flex items-center gap-2">
-				<Label
-					className="flex items-center gap-3 cursor-pointer px-2"
-					htmlFor="select-all-projects"
-				>
-					<Checkbox
-						className="size-5"
-						id="select-all-projects"
-						checked={
-							isAllSelected ? true : hasSomeSelected ? "indeterminate" : false
-						}
-						onCheckedChange={(checked) =>
-							handleSelectAll({ checked: checked === true })
-						}
-					/>
-					<span className="text-muted-foreground hidden md:block">
-						Select all
-					</span>
-				</Label>
-
-				<div className="h-4 w-px bg-border/50" />
-
+		<div className="flex items-center justify-between px-4 pb-1">
+			<div className="flex items-center gap-1">
 				<SortDropdown>
-					<Button variant="text" className="text-muted-foreground pl-2">
+					<Button
+						variant="text"
+						className="text-muted-foreground px-1.5 text-sm"
+					>
 						{SORT_LABELS[sortKey]}
 					</Button>
 				</SortDropdown>
 				<Button
 					type="button"
 					variant="text"
-					className="text-muted-foreground"
+					className="text-muted-foreground px-1.5"
 					onClick={() =>
 						setSortOrder({
 							sortOrder: sortOrder === "asc" ? "desc" : "asc",
 						})
 					}
-					onKeyDown={(event) => {
-						if (event.key === "Enter" || event.key === " ") {
-							setSortOrder({
-								sortOrder: sortOrder === "asc" ? "desc" : "asc",
-							});
-						}
-					}}
-					aria-label={`Sort ${sortOrder === "asc" ? "ascending" : "descending"}`}
+					aria-label={`Сортировка ${sortOrder === "asc" ? "по возрастанию" : "по убыванию"}`}
 				>
 					<HugeiconsIcon
 						icon={ArrowDown02Icon}
 						className={sortOrder === "asc" ? "rotate-180" : ""}
 					/>
 				</Button>
-
-				<div className="h-4 w-px bg-border/50 block md:hidden" />
-
-				<div className="flex md:hidden items-center gap-4">
-					<Button
-						variant="text"
-						onClick={() => setViewMode({ viewMode: "grid" })}
-					>
-						<HugeiconsIcon
-							icon={GridViewIcon}
-							className={cn(
-								viewMode === "grid" ? "text-primary" : "text-muted-foreground",
-							)}
-						/>
-					</Button>
-					<Button
-						variant="text"
-						onClick={() => setViewMode({ viewMode: "list" })}
-					>
-						<HugeiconsIcon
-							icon={LeftToRightListDashIcon}
-							className={cn(
-								viewMode === "list" ? "text-primary" : "text-muted-foreground",
-							)}
-						/>
-					</Button>
-				</div>
 			</div>
-			{selectedProjectCount > 0 ? <ProjectActions /> : null}
+
+			{projectIds.length > 0 &&
+				(isSelectMode ? (
+					selectedProjectCount > 0 ? (
+						<ProjectActions />
+					) : (
+						<Button
+							variant="text"
+							className="text-muted-foreground px-1.5 text-sm"
+							onClick={() => setIsSelectMode({ isSelectMode: false })}
+						>
+							Отмена
+						</Button>
+					)
+				) : (
+					<Button
+						variant="text"
+						className="text-muted-foreground px-1.5 text-sm"
+						onClick={() => setIsSelectMode({ isSelectMode: true })}
+					>
+						Выбрать
+					</Button>
+				))}
 		</div>
 	);
 }
 
-function SearchBar({
-	className,
-	collapsed,
-}: {
-	className?: string;
-	collapsed?: boolean;
-}) {
+function SearchBar() {
 	const { searchQuery, setSearchQuery } = useProjectsStore();
 
 	return (
-		<>
-			{collapsed ? (
-				<div className="block md:hidden">
-					<Button
-						size="icon"
-						variant="outline"
-						className="size-10.5 rounded-full"
-					>
-						<HugeiconsIcon icon={Search01Icon} />
-					</Button>
-				</div>
-			) : (
-				<div className={cn("relative", className)}>
-					<HugeiconsIcon
-						icon={Search01Icon}
-						className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2"
-						aria-hidden="true"
-					/>
-					<Input
-						placeholder="Search..."
-						value={searchQuery}
-						onChange={(event) => setSearchQuery({ query: event.target.value })}
-						size="lg"
-						className="pl-9"
-					/>
-				</div>
-			)}
-		</>
+		<div className="relative">
+			<HugeiconsIcon
+				icon={Search01Icon}
+				className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2"
+				aria-hidden="true"
+			/>
+			<Input
+				placeholder="Поиск проектов"
+				value={searchQuery}
+				onChange={(event) => setSearchQuery({ query: event.target.value })}
+				className="pl-9"
+			/>
+		</div>
 	);
 }
 
 const PROJECT_ACTIONS = [
 	{
 		id: "duplicate",
-		label: "Duplicate",
+		label: "Дублировать",
 		icon: Copy01Icon,
 		variant: "outline" as const,
 	},
 	{
 		id: "delete",
-		label: "Delete",
+		label: "Удалить",
 		icon: Delete02Icon,
 		variant: "destructive-foreground" as const,
 	},
@@ -403,7 +269,7 @@ async function renameProject({
 
 function ProjectActions() {
 	const editor = useEditor();
-	const { selectedProjectIds, clearSelectedProjects } = useProjectsStore();
+	const { selectedProjectIds, setIsSelectMode } = useProjectsStore();
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
 	const savedProjects = editor.project.getSavedProjects();
@@ -411,9 +277,11 @@ function ProjectActions() {
 		.filter((project) => selectedProjectIds.includes(project.id))
 		.map((project) => project.name);
 
+	const exitSelectMode = () => setIsSelectMode({ isSelectMode: false });
+
 	const handleDuplicate = async () => {
 		await duplicateProjects({ editor, ids: selectedProjectIds });
-		clearSelectedProjects();
+		exitSelectMode();
 	};
 
 	const handleDeleteClick = () => {
@@ -422,7 +290,7 @@ function ProjectActions() {
 
 	const handleDeleteConfirm = async () => {
 		await deleteProjects({ editor, ids: selectedProjectIds });
-		clearSelectedProjects();
+		exitSelectMode();
 		setIsDeleteDialogOpen(false);
 	};
 
@@ -433,24 +301,10 @@ function ProjectActions() {
 
 	return (
 		<>
-			<div className="flex items-center gap-2.5 px-3">
-				<div className="hidden sm:flex items-center gap-2.5">
-					{PROJECT_ACTIONS.map((action) => (
-						<Button
-							key={action.id}
-							size="icon"
-							variant={action.variant}
-							className="size-9"
-							onClick={actionHandlers[action.id]}
-						>
-							<HugeiconsIcon icon={action.icon} />
-						</Button>
-					))}
-				</div>
-
+			<div className="flex items-center gap-2">
 				<DropdownMenu>
-					<DropdownMenuTrigger asChild className="sm:hidden">
-						<Button size="icon" variant="outline" className="size-9">
+					<DropdownMenuTrigger asChild>
+						<Button size="icon" variant="outline" className="size-8">
 							<HugeiconsIcon icon={MoreHorizontalIcon} />
 						</Button>
 					</DropdownMenuTrigger>
@@ -467,6 +321,13 @@ function ProjectActions() {
 						))}
 					</DropdownMenuContent>
 				</DropdownMenu>
+				<Button
+					variant="text"
+					className="text-muted-foreground px-1.5 text-sm"
+					onClick={exitSelectMode}
+				>
+					Отмена
+				</Button>
 			</div>
 
 			<DeleteProjectDialog
@@ -485,30 +346,30 @@ function SortDropdown({ children }: { children: React.ReactNode }) {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
-			<DropdownMenuContent className="w-48" align="center">
+			<DropdownMenuContent className="w-48" align="start">
 				<DropdownMenuCheckboxItem
 					checked={sortKey === "createdAt"}
 					onCheckedChange={() => setSortKey({ sortKey: "createdAt" })}
 				>
-					Created
+					Создан
 				</DropdownMenuCheckboxItem>
 				<DropdownMenuCheckboxItem
 					checked={sortKey === "updatedAt"}
 					onCheckedChange={() => setSortKey({ sortKey: "updatedAt" })}
 				>
-					Modified
+					Изменён
 				</DropdownMenuCheckboxItem>
 				<DropdownMenuCheckboxItem
 					checked={sortKey === "name"}
 					onCheckedChange={() => setSortKey({ sortKey: "name" })}
 				>
-					Name
+					Имя
 				</DropdownMenuCheckboxItem>
 				<DropdownMenuCheckboxItem
 					checked={sortKey === "duration"}
 					onCheckedChange={() => setSortKey({ sortKey: "duration" })}
 				>
-					Duration
+					Длительность
 				</DropdownMenuCheckboxItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
@@ -527,13 +388,8 @@ function NewProjectButton() {
 	};
 
 	return (
-		<Button
-			size="lg"
-			className="flex px-5 md:px-6"
-			onClick={handleCreateProject}
-		>
-			<span className="text-sm font-medium hidden md:block">New project</span>
-			<span className="text-sm font-medium block md:hidden">New</span>
+		<Button size="icon" className="size-9 rounded-full" onClick={handleCreateProject}>
+			<HugeiconsIcon icon={PlusSignIcon} />
 		</Button>
 	);
 }
@@ -547,17 +403,14 @@ function ProjectItem({
 }) {
 	const {
 		selectedProjectIds,
-		viewMode,
+		isSelectMode,
 		setProjectSelected,
 		selectProjectRange,
 	} = useProjectsStore();
 	const selectedProjectIdSet = new Set(selectedProjectIds);
 	const isSelected = selectedProjectIdSet.has(project.id);
-	const selectedProjectCount = selectedProjectIds.length;
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const durationLabel = formatProjectDuration({ duration: project.duration });
-	const isMultiSelect = selectedProjectCount > 1;
-	const isGridView = viewMode === "grid";
 
 	const handleCheckboxChange = ({
 		checked,
@@ -573,46 +426,9 @@ function ProjectItem({
 		setProjectSelected({ projectId: project.id, isSelected: checked });
 	};
 
-	const gridContent = (
-		<Card className="bg-background overflow-hidden border-none p-0">
-			<div className="bg-muted relative aspect-video">
-				<div className="absolute inset-0">
-					{project.thumbnail ? (
-						<Image
-							src={project.thumbnail}
-							alt="Project thumbnail"
-							fill
-							className="object-cover"
-						/>
-					) : (
-						<div className="flex size-full items-center justify-center">
-							<OcVideoIcon className="text-muted-foreground size-12 shrink-0" />
-						</div>
-					)}
-				</div>
-
-				{durationLabel && (
-					<div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs font-semibold px-2 py-1 rounded-sm">
-						{durationLabel}
-					</div>
-				)}
-			</div>
-
-			<CardContent className="flex flex-col gap-2 px-0 pt-4">
-				<h3 className="group-hover:text-foreground/90 line-clamp-2 text-sm leading-snug font-medium">
-					{project.name}
-				</h3>
-				<div className="text-muted-foreground flex items-center gap-1.5 text-sm">
-					<HugeiconsIcon icon={Calendar04Icon} className="size-4" />
-					<span>Created {formatDate({ date: project.createdAt })}</span>
-				</div>
-			</CardContent>
-		</Card>
-	);
-
 	const listRowContent = (
-		<div className="flex items-center gap-3 flex-1 min-w-0">
-			<div className="bg-muted relative size-14 sm:size-10 rounded-lg sm:rounded overflow-hidden shrink-0">
+		<div className="flex min-w-0 flex-1 items-center gap-3">
+			<div className="bg-muted relative size-16 shrink-0 overflow-hidden rounded-xl">
 				{project.thumbnail ? (
 					<Image
 						src={project.thumbnail}
@@ -622,108 +438,65 @@ function ProjectItem({
 					/>
 				) : (
 					<div className="flex size-full items-center justify-center">
-						<OcVideoIcon className="text-muted-foreground size-5 shrink-0" />
+						<OcVideoIcon className="text-muted-foreground size-6 shrink-0" />
 					</div>
 				)}
 				{durationLabel && (
-					<div className="absolute bottom-0.5 right-0.5 bg-black/60 text-white text-[0.6rem] font-medium px-1 rounded-sm sm:hidden">
+					<div className="absolute bottom-1 right-1 rounded-sm bg-black/60 px-1 text-[0.62rem] font-medium text-white">
 						{durationLabel}
 					</div>
 				)}
 			</div>
 
-			<div className="flex flex-col min-w-0 flex-1 gap-0.5">
-				<h3 className="group-hover:text-foreground/90 text-sm font-medium truncate">
-					{project.name}
-				</h3>
-				<span className="text-muted-foreground text-xs sm:hidden">
+			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+				<h3 className="truncate text-sm font-medium">{project.name}</h3>
+				<span className="text-muted-foreground text-xs">
 					{formatDate({ date: project.createdAt })}
 				</span>
 			</div>
-
-			<span className="text-muted-foreground text-sm shrink-0 hidden sm:block">
-				{durationLabel ?? "—"}
-			</span>
-
-			<span className="text-muted-foreground text-sm shrink-0 w-auto pl-8 text-right hidden xs:block">
-				{formatDate({ date: project.createdAt })}
-			</span>
 		</div>
 	);
 
-	const listContent = (
+	return (
 		<div
-			className={`flex items-center gap-4 py-2 px-4 border-b border-border/50 ${
+			className={`flex items-center gap-3 border-b px-4 py-3 ${
 				isSelected ? "bg-primary/5" : ""
 			}`}
 		>
-			<Checkbox
-				checked={isSelected}
-				onMouseDown={(event) => event.preventDefault()}
-				onClick={(event) => {
-					handleCheckboxChange({
-						checked: !isSelected,
-						shiftKey: event.shiftKey,
-					});
-				}}
-				onCheckedChange={() => {}}
-				className="size-5 shrink-0"
-			/>
+			{isSelectMode && (
+				<Checkbox
+					checked={isSelected}
+					onMouseDown={(event) => event.preventDefault()}
+					onClick={(event) => {
+						handleCheckboxChange({
+							checked: !isSelected,
+							shiftKey: event.shiftKey,
+						});
+					}}
+					onCheckedChange={() => {}}
+					className="size-5 shrink-0"
+				/>
+			)}
 
-			<Link href={`/editor/${project.id}`} className="flex-1 min-w-0">
+			<Link
+				href={isSelectMode ? "#" : `/editor/${project.id}`}
+				onClick={(event) => {
+					if (isSelectMode) {
+						event.preventDefault();
+						handleCheckboxChange({ checked: !isSelected, shiftKey: false });
+					}
+				}}
+				className="min-w-0 flex-1"
+			>
 				{listRowContent}
 			</Link>
 
-			{!isMultiSelect && (
+			{!isSelectMode && (
 				<ProjectMenu
 					isOpen={isDropdownOpen}
 					onOpenChange={setIsDropdownOpen}
 					project={project}
-					variant="list"
 				/>
-			)}
-		</div>
-	);
-
-	const cardContent = isGridView ? gridContent : listContent;
-
-	if (!isGridView) {
-		return <div className="group relative">{listContent}</div>;
-	}
-
-	return (
-		<div className="group relative">
-			<Link href={`/editor/${project.id}`} className="block">
-				{cardContent}
-			</Link>
-
-			{isGridView && (
-				<>
-					<Checkbox
-						checked={isSelected}
-						onMouseDown={(event) => event.preventDefault()}
-						onClick={(event) => {
-							handleCheckboxChange({
-								checked: !isSelected,
-								shiftKey: event.shiftKey,
-							});
-						}}
-						onCheckedChange={() => {}}
-						className={`absolute z-10 size-5 top-3 left-3 ${
-							isSelected || isDropdownOpen
-								? "opacity-100"
-								: "opacity-0 group-hover:opacity-100"
-						}`}
-					/>
-
-					{!isMultiSelect && (
-						<ProjectMenu
-							isOpen={isDropdownOpen}
-							onOpenChange={setIsDropdownOpen}
-							project={project}
-						/>
-					)}
-				</>
 			)}
 		</div>
 	);
@@ -733,12 +506,10 @@ function ProjectMenu({
 	isOpen,
 	onOpenChange,
 	project,
-	variant = "grid",
 }: {
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
 	project: TProjectMetadata;
-	variant?: "grid" | "list";
 }) {
 	const editor = useEditor();
 	const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
@@ -791,8 +562,6 @@ function ProjectMenu({
 		onOpenChange(false);
 	};
 
-	const isGrid = variant === "grid";
-
 	return (
 		<>
 			<DropdownMenu open={isOpen} onOpenChange={onOpenChange}>
@@ -800,11 +569,7 @@ function ProjectMenu({
 					<Button
 						type="button"
 						variant="background"
-						className={
-							isGrid
-								? `absolute z-10 top-3 right-3 ${isOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`
-								: "!bg-transparent !shadow-none"
-						}
+						className="!bg-transparent !shadow-none"
 						size="icon"
 						aria-label="Project menu"
 						onClick={(event) =>
@@ -829,19 +594,19 @@ function ProjectMenu({
 				<DropdownMenuContent className="w-48" align="end">
 					<DropdownMenuItem onClick={handleRename}>
 						<HugeiconsIcon icon={Edit03Icon} />
-						Rename
+						Переименовать
 					</DropdownMenuItem>
 					<DropdownMenuItem onClick={handleDuplicate}>
 						<HugeiconsIcon icon={Copy01Icon} />
-						Duplicate
+						Дублировать
 					</DropdownMenuItem>
 					<DropdownMenuItem onClick={handleInfoClick}>
 						<HugeiconsIcon icon={InformationCircleIcon} />
-						Info
+						Инфо
 					</DropdownMenuItem>
 					<DropdownMenuItem variant="destructive" onClick={handleDeleteClick}>
 						<HugeiconsIcon icon={Delete02Icon} />
-						Delete
+						Удалить
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
@@ -874,30 +639,23 @@ function ProjectMenu({
 
 function ProjectsSkeleton() {
 	const skeletonIds = Array.from(
-		{ length: 24 },
+		{ length: 8 },
 		(_, index) => `skeleton-${index}`,
 	);
 
 	return (
-		<div className="xs:grid-cols-2 grid grid-cols-1 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+		<div className="flex flex-col">
 			{skeletonIds.map((skeletonId) => (
-				<Card
+				<div
 					key={skeletonId}
-					className="bg-background overflow-hidden border-none p-0"
+					className="flex items-center gap-3 border-b px-4 py-3"
 				>
-					<div className="bg-muted relative aspect-video">
-						<div className="absolute inset-0">
-							<Skeleton className="bg-muted/50 size-full" />
-						</div>
+					<Skeleton className="bg-muted/50 size-16 shrink-0 rounded-xl" />
+					<div className="flex flex-1 flex-col gap-2">
+						<Skeleton className="bg-muted/50 h-4 w-2/3" />
+						<Skeleton className="bg-muted/50 h-3 w-1/3" />
 					</div>
-					<CardContent className="flex flex-col gap-2 px-0 pt-4">
-						<Skeleton className="bg-muted/50 h-4 w-3/4" />
-						<div className="text-muted-foreground flex items-center gap-1.5">
-							<Skeleton className="bg-muted/50 size-4" />
-							<Skeleton className="bg-muted/50 h-4 w-24" />
-						</div>
-					</CardContent>
-				</Card>
+				</div>
 			))}
 		</div>
 	);
@@ -916,25 +674,25 @@ function EmptyState() {
 			});
 			router.push(`/editor/${projectId}`);
 		} catch (error) {
-			toast.error("Failed to create project", {
+			toast.error("Не удалось создать проект", {
 				description:
-					error instanceof Error ? error.message : "Please try again",
+					error instanceof Error ? error.message : "Попробуйте снова",
 			});
 		}
 	};
 
 	if (savedProjects.length > 0) {
 		return (
-			<div className="flex flex-col items-center justify-center gap-5 py-16 text-center">
+			<div className="flex flex-col items-center justify-center gap-5 px-4 py-16 text-center">
 				<div className="flex flex-col items-center gap-8">
 					<HugeiconsIcon
 						icon={Search01Icon}
-						className="text-muted-foreground size-16 bg-accent/35 border rounded-md p-4"
+						className="text-muted-foreground bg-accent/35 size-16 rounded-md border p-4"
 					/>
 					<div className="flex flex-col items-center gap-3">
-						<h3 className="text-lg font-medium">No results found</h3>
+						<h3 className="text-lg font-medium">Ничего не найдено</h3>
 						<p className="text-muted-foreground max-w-md">
-							Your search for "{searchQuery}" did not return any results.
+							По запросу «{searchQuery}» ничего не нашлось.
 						</p>
 					</div>
 				</div>
@@ -943,14 +701,14 @@ function EmptyState() {
 					variant="outline"
 					size="lg"
 				>
-					Clear search
+					Очистить поиск
 				</Button>
 			</div>
 		);
 	}
 
 	return (
-		<div className="flex flex-col items-center justify-center gap-6 py-16 text-center">
+		<div className="flex flex-col items-center justify-center gap-6 px-4 py-16 text-center">
 			<div className="flex flex-col items-center gap-2">
 				<div className="bg-muted/30 flex size-16 items-center justify-center rounded-full">
 					<HugeiconsIcon
@@ -958,15 +716,15 @@ function EmptyState() {
 						className="text-muted-foreground size-8"
 					/>
 				</div>
-				<h3 className="text-lg font-medium">No projects yet</h3>
+				<h3 className="text-lg font-medium">Проектов пока нет</h3>
 				<p className="text-muted-foreground max-w-md">
-					Start creating your first project. Import media, edit, and export your
-					videos. All privately.
+					Создайте первый проект — импортируйте медиа, монтируйте и
+					экспортируйте видео. Всё приватно, на вашем устройстве.
 				</p>
 			</div>
 			<Button size="lg" className="gap-2" onClick={handleCreateProject}>
 				<HugeiconsIcon icon={PlusSignIcon} />
-				Create your first project
+				Создать первый проект
 			</Button>
 		</div>
 	);

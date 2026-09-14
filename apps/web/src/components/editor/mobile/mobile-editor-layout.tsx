@@ -6,7 +6,7 @@ import { MobileEditorToolbar } from "./mobile-editor-toolbar";
 
 export function MobileEditorLayout() {
 	return (
-		<div className="flex h-full min-h-0 w-full flex-col md:hidden">
+		<div className="flex h-full min-h-0 w-full flex-col">
 			<div className="min-h-0 flex-[3] px-2 pt-2">
 				<PreviewPanel />
 			</div>

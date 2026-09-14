@@ -6,16 +6,12 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-	PlusSignIcon,
-	Search01Icon,
-	Video01Icon,
-} from "@hugeicons/core-free-icons";
+import { PlusSignIcon, Search01Icon } from "@hugeicons/core-free-icons";
 import { OcVideoIcon } from "@opencut/ui/icons";
 import { useEditor } from "@/hooks/use-editor";
-import { MobileTabBar, MobileTabBarSpacer } from "@/components/mobile/mobile-tab-bar";
+import { AppFrame } from "@/components/mobile/app-frame";
+import { MobileTabBar } from "@/components/mobile/mobile-tab-bar";
 import { tabs, type Tab } from "@/stores/assets-panel-store";
-import { DEFAULT_LOGO_URL } from "@/constants/site-constants";
 
 /** Editing tools surfaced as quick shortcuts — these map 1:1 to the real
  * panels available inside the editor, so every tile here opens a working
@@ -31,6 +27,19 @@ const QUICK_TOOLS: Tab[] = [
 	"filters",
 	"adjustment",
 ];
+
+const TOOL_LABELS: Record<Tab, string> = {
+	media: "Медиа",
+	sounds: "Звук",
+	text: "Текст",
+	stickers: "Наложение",
+	effects: "Эффекты",
+	transitions: "Переходы",
+	captions: "Субтитры",
+	filters: "Фильтры",
+	adjustment: "Коррекция",
+	settings: "Настройки",
+};
 
 export default function StudioPage() {
 	const editor = useEditor();
@@ -64,143 +73,114 @@ export default function StudioPage() {
 	};
 
 	return (
-		<div className="bg-background min-h-screen md:hidden">
-			<header className="flex items-center justify-between px-4 pt-5 pb-3">
-				<div className="flex items-center gap-2.5">
-					<Image
-						src={DEFAULT_LOGO_URL}
-						alt="OpenCut"
-						width={26}
-						height={26}
-						className="invert dark:invert-0"
-					/>
-					<span className="text-lg font-semibold">OpenCut</span>
-				</div>
-				<Link
-					href="/projects"
-					aria-label="Поиск проектов"
-					className="text-muted-foreground"
-				>
-					<HugeiconsIcon icon={Search01Icon} className="size-5" />
-				</Link>
-			</header>
+		<AppFrame>
+			<div className="from-primary/25 via-primary/5 flex-1 overflow-y-auto bg-gradient-to-b to-transparent">
+				<header className="flex items-center justify-between px-4 pt-6 pb-4">
+					<div className="flex items-center gap-2">
+						<div className="bg-primary flex size-7 items-center justify-center rounded-lg text-sm font-black text-white">
+							B
+						</div>
+						<span className="text-lg font-bold tracking-tight">BASE</span>
+					</div>
+					<Link
+						href="/projects"
+						aria-label="Поиск проектов"
+						className="text-muted-foreground"
+					>
+						<HugeiconsIcon icon={Search01Icon} className="size-5" />
+					</Link>
+				</header>
 
-			<main className="flex flex-col gap-6 px-4 pb-6">
-				<div>
-					<p className="text-muted-foreground text-sm">
-						Нужно новое видео?
-					</p>
-					<h1 className="text-xl font-semibold">Создайте проект</h1>
-				</div>
+				<main className="flex flex-col gap-6 px-4 pb-6">
+					<div>
+						<p className="text-muted-foreground text-sm">
+							Нужно новое видео?
+						</p>
+						<h1 className="text-xl font-semibold">Создайте проект</h1>
+					</div>
 
-				<div className="grid grid-cols-2 gap-3">
 					<button
 						type="button"
 						onClick={handleCreateProject}
-						className="from-primary/15 to-primary/5 border-primary/20 flex flex-col items-center justify-center gap-2 rounded-2xl border bg-gradient-to-b px-4 py-8 text-center active:scale-[0.98]"
+						className="bg-primary flex items-center justify-center gap-2 rounded-2xl py-4 text-center font-semibold text-white shadow-lg shadow-primary/20 active:scale-[0.98]"
 					>
-						<div className="bg-primary flex size-11 items-center justify-center rounded-full text-white">
-							<HugeiconsIcon icon={PlusSignIcon} className="size-6" />
-						</div>
-						<span className="text-sm font-semibold">Новое видео</span>
+						<HugeiconsIcon icon={PlusSignIcon} className="size-5" />
+						Новое видео
 					</button>
-					<Link
-						href="/projects"
-						className="bg-accent/40 border-border/60 flex flex-col items-center justify-center gap-2 rounded-2xl border px-4 py-8 text-center active:scale-[0.98]"
-					>
-						<div className="bg-secondary flex size-11 items-center justify-center rounded-full">
-							<HugeiconsIcon icon={Video01Icon} className="size-6" />
-						</div>
-						<span className="text-sm font-semibold">Все проекты</span>
-					</Link>
-				</div>
 
-				<section className="flex flex-col gap-3">
-					<div className="flex items-center justify-between">
-						<h2 className="text-sm font-medium">Недавние</h2>
-						{recentProjects.length > 0 && (
-							<Link
-								href="/projects"
-								className="text-primary text-xs font-medium"
-							>
-								Все
-							</Link>
-						)}
-					</div>
-
-					{recentProjects.length === 0 ? (
-						<p className="text-muted-foreground py-6 text-center text-sm">
-							Проектов пока нет — создайте первый
-						</p>
-					) : (
-						<div className="scrollbar-hidden -mx-4 flex gap-3 overflow-x-auto px-4">
-							{recentProjects.map((project) => (
+					<section className="flex flex-col gap-3">
+						<div className="flex items-center justify-between">
+							<h2 className="text-sm font-medium">Недавние</h2>
+							{recentProjects.length > 0 && (
 								<Link
-									key={project.id}
-									href={`/editor/${project.id}`}
-									className="flex w-28 shrink-0 flex-col gap-1.5"
+									href="/projects"
+									className="text-primary text-xs font-medium"
 								>
-									<div className="bg-muted relative aspect-[9/16] w-28 overflow-hidden rounded-xl">
-										{project.thumbnail ? (
-											<Image
-												src={project.thumbnail}
-												alt={project.name}
-												fill
-												className="object-cover"
-											/>
-										) : (
-											<div className="flex size-full items-center justify-center">
-												<OcVideoIcon className="text-muted-foreground size-8" />
-											</div>
-										)}
-									</div>
-									<span className="truncate text-xs font-medium">
-										{project.name}
-									</span>
+									Все
 								</Link>
-							))}
+							)}
 						</div>
-					)}
-				</section>
 
-				<section className="flex flex-col gap-3">
-					<h2 className="text-sm font-medium">Инструменты редактора</h2>
-					<div className="grid grid-cols-3 gap-3">
-						{QUICK_TOOLS.map((toolKey) => {
-							const tool = tabs[toolKey];
-							return (
-								<button
-									key={toolKey}
-									type="button"
-									onClick={handleCreateProject}
-									className="bg-accent/30 flex flex-col items-center gap-2 rounded-xl py-4 active:scale-[0.97]"
-								>
-									<tool.icon className="text-foreground size-5" />
-									<span className="text-muted-foreground text-[0.7rem]">
-										{TOOL_LABELS[toolKey]}
-									</span>
-								</button>
-							);
-						})}
-					</div>
-				</section>
-			</main>
+						{recentProjects.length === 0 ? (
+							<p className="text-muted-foreground py-6 text-center text-sm">
+								Проектов пока нет — создайте первый
+							</p>
+						) : (
+							<div className="scrollbar-hidden -mx-4 flex gap-3 overflow-x-auto px-4">
+								{recentProjects.map((project) => (
+									<Link
+										key={project.id}
+										href={`/editor/${project.id}`}
+										className="flex w-28 shrink-0 flex-col gap-1.5"
+									>
+										<div className="bg-muted relative aspect-[9/16] w-28 overflow-hidden rounded-xl">
+											{project.thumbnail ? (
+												<Image
+													src={project.thumbnail}
+													alt={project.name}
+													fill
+													className="object-cover"
+												/>
+											) : (
+												<div className="flex size-full items-center justify-center">
+													<OcVideoIcon className="text-muted-foreground size-8" />
+												</div>
+											)}
+										</div>
+										<span className="truncate text-xs font-medium">
+											{project.name}
+										</span>
+									</Link>
+								))}
+							</div>
+						)}
+					</section>
 
-			<MobileTabBarSpacer />
+					<section className="flex flex-col gap-3">
+						<h2 className="text-sm font-medium">Инструменты редактора</h2>
+						<div className="grid grid-cols-3 gap-3">
+							{QUICK_TOOLS.map((toolKey) => {
+								const tool = tabs[toolKey];
+								return (
+									<button
+										key={toolKey}
+										type="button"
+										onClick={handleCreateProject}
+										className="bg-accent/40 flex flex-col items-center gap-2 rounded-xl py-4 active:scale-[0.97]"
+									>
+										<tool.icon className="text-foreground size-5" />
+										<span className="text-muted-foreground text-[0.7rem]">
+											{TOOL_LABELS[toolKey]}
+										</span>
+									</button>
+								);
+							})}
+						</div>
+					</section>
+				</main>
+			</div>
+
 			<MobileTabBar />
-		</div>
+		</AppFrame>
 	);
 }
-
-const TOOL_LABELS: Record<Tab, string> = {
-	media: "Медиа",
-	sounds: "Звук",
-	text: "Текст",
-	stickers: "Наложение",
-	effects: "Эффекты",
-	transitions: "Переходы",
-	captions: "Субтитры",
-	filters: "Фильтры",
-	adjustment: "Коррекция",
-	settings: "Настройки",
-};

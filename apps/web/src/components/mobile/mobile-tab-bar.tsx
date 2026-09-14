@@ -43,7 +43,7 @@ export function MobileTabBar() {
 
 	return (
 		<nav
-			className="bg-background/95 border-border/60 fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t backdrop-blur-lg md:hidden"
+			className="bg-background border-border/60 flex shrink-0 items-stretch border-t"
 			style={{
 				paddingBottom: "env(safe-area-inset-bottom)",
 			}}
@@ -77,15 +77,5 @@ export function MobileTabBar() {
 				);
 			})}
 		</nav>
-	);
-}
-
-/** Spacer to keep page content from being hidden behind the fixed tab bar on mobile. */
-export function MobileTabBarSpacer() {
-	return (
-		<div
-			className="h-[calc(3.75rem+env(safe-area-inset-bottom))] w-full shrink-0 md:hidden"
-			aria-hidden
-		/>
 	);
 }

@@ -9,6 +9,7 @@ interface ProjectsState {
 	sortKey: TProjectSortKey;
 	sortOrder: "asc" | "desc";
 	viewMode: ProjectsViewMode;
+	isSelectMode: boolean;
 	selectedProjectIds: string[];
 	lastSelectedProjectId: string | null;
 	isHydrated: boolean;
@@ -18,6 +19,7 @@ interface ProjectsState {
 	setSortOrder: ({ sortOrder }: { sortOrder: "asc" | "desc" }) => void;
 	toggleSortOrder: () => void;
 	setViewMode: ({ viewMode }: { viewMode: ProjectsViewMode }) => void;
+	setIsSelectMode: ({ isSelectMode }: { isSelectMode: boolean }) => void;
 	setSelectedProjects: ({ projectIds }: { projectIds: string[] }) => void;
 	clearSelectedProjects: () => void;
 	setProjectSelected: ({
@@ -63,6 +65,7 @@ export const useProjectsStore = create<ProjectsState>()(
 			sortKey: "createdAt",
 			sortOrder: "desc",
 			viewMode: "grid",
+			isSelectMode: false,
 			selectedProjectIds: [],
 			lastSelectedProjectId: null,
 			isHydrated: false,
@@ -75,6 +78,13 @@ export const useProjectsStore = create<ProjectsState>()(
 					sortOrder: state.sortOrder === "asc" ? "desc" : "asc",
 				})),
 			setViewMode: ({ viewMode }) => set({ viewMode }),
+			setIsSelectMode: ({ isSelectMode }) =>
+				set({
+					isSelectMode,
+					...(isSelectMode
+						? {}
+						: { selectedProjectIds: [], lastSelectedProjectId: null }),
+				}),
 			setSelectedProjects: ({ projectIds }) =>
 				set({ selectedProjectIds: projectIds }),
 			clearSelectedProjects: () =>

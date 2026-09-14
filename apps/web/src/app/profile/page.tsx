@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useTheme } from "next-themes";
@@ -14,8 +13,9 @@ import {
 } from "@hugeicons/core-free-icons";
 import { FaDiscord } from "react-icons/fa6";
 import { useEditor } from "@/hooks/use-editor";
-import { MobileTabBar, MobileTabBarSpacer } from "@/components/mobile/mobile-tab-bar";
-import { DEFAULT_LOGO_URL, SOCIAL_LINKS } from "@/constants/site-constants";
+import { AppFrame } from "@/components/mobile/app-frame";
+import { MobileTabBar } from "@/components/mobile/mobile-tab-bar";
+import { SOCIAL_LINKS } from "@/constants/site-constants";
 import { formatTimeCode } from "@/lib/time";
 
 export default function ProfilePage() {
@@ -42,83 +42,70 @@ export default function ProfilePage() {
 			: "0:00";
 
 	return (
-		<div className="bg-background min-h-screen md:hidden">
-			<header className="flex items-center justify-between px-4 pt-5 pb-3">
-				<h1 className="text-xl font-semibold">Профиль</h1>
-			</header>
+		<AppFrame>
+			<div className="from-primary/25 via-primary/5 flex-1 overflow-y-auto bg-gradient-to-b to-transparent">
+				<header className="flex items-center justify-between px-4 pt-6 pb-4">
+					<h1 className="text-xl font-semibold">Профиль</h1>
+				</header>
 
-			<main className="flex flex-col gap-6 px-4 pb-6">
-				<div className="flex items-center gap-3">
-					<div className="bg-secondary flex size-14 items-center justify-center overflow-hidden rounded-full">
-						<Image
-							src={DEFAULT_LOGO_URL}
-							alt=""
-							width={28}
-							height={28}
-							className="invert dark:invert-0"
+				<main className="flex flex-col gap-6 px-4 pb-6">
+					<div className="flex items-center gap-3">
+						<div className="bg-primary flex size-14 items-center justify-center rounded-full text-xl font-black text-white">
+							B
+						</div>
+						<div>
+							<p className="text-base font-semibold">Локальный профиль</p>
+							<p className="text-muted-foreground text-sm">
+								Все проекты хранятся в этом браузере
+							</p>
+						</div>
+					</div>
+
+					<div className="from-primary/20 to-primary/5 border-primary/20 flex items-center justify-around rounded-2xl border bg-gradient-to-br px-4 py-5">
+						<Stat label="Проекты" value={String(projects.length)} />
+						<div className="bg-border/60 h-8 w-px" />
+						<Stat label="Общая длительность" value={totalDurationLabel} />
+					</div>
+
+					<section className="bg-card flex flex-col overflow-hidden rounded-2xl border">
+						<MenuLink href="/projects" icon={Folder03Icon} label="Мои проекты" />
+						<MenuLink href="/studio" icon={Video01Icon} label="Новый проект" />
+						<MenuButton
+							icon={Moon02Icon}
+							label="Тёмная тема"
+							active={theme === "dark"}
+							onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
 						/>
-					</div>
-					<div>
-						<p className="text-base font-semibold">Локальный профиль</p>
-						<p className="text-muted-foreground text-sm">
-							Все проекты хранятся в этом браузере
-						</p>
-					</div>
-				</div>
+					</section>
 
-				<div className="from-primary/20 to-primary/5 border-primary/20 flex items-center justify-around rounded-2xl border bg-gradient-to-br px-4 py-5">
-					<Stat label="Проекты" value={String(projects.length)} />
-					<div className="bg-border/60 h-8 w-px" />
-					<Stat label="Общая длительность" value={totalDurationLabel} />
-				</div>
+					<section className="bg-card flex flex-col overflow-hidden rounded-2xl border">
+						<MenuLink
+							href={SOCIAL_LINKS.github}
+							icon={GithubIcon}
+							label="Исходный код на GitHub"
+							external
+						/>
+						<MenuLink
+							href={SOCIAL_LINKS.discord}
+							customIcon={<FaDiscord className="text-muted-foreground size-5" />}
+							label="Сообщество в Discord"
+							external
+						/>
+						<MenuLink
+							href="/studio"
+							icon={InformationCircleIcon}
+							label="О приложении"
+						/>
+					</section>
 
-				<section className="flex flex-col overflow-hidden rounded-2xl border">
-					<MenuLink
-						href="/projects"
-						icon={Folder03Icon}
-						label="Мои проекты"
-					/>
-					<MenuLink
-						href="/studio"
-						icon={Video01Icon}
-						label="Новый проект"
-					/>
-					<MenuButton
-						icon={Moon02Icon}
-						label="Тёмная тема"
-						active={theme === "dark"}
-						onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-					/>
-				</section>
+					<p className="text-muted-foreground px-1 text-center text-xs">
+						BASE — мобильный видеоредактор в браузере
+					</p>
+				</main>
+			</div>
 
-				<section className="flex flex-col overflow-hidden rounded-2xl border">
-					<MenuLink
-						href={SOCIAL_LINKS.github}
-						icon={GithubIcon}
-						label="Исходный код на GitHub"
-						external
-					/>
-					<MenuLink
-						href={SOCIAL_LINKS.discord}
-						customIcon={<FaDiscord className="text-muted-foreground size-5" />}
-						label="Сообщество в Discord"
-						external
-					/>
-					<MenuLink
-						href="/"
-						icon={InformationCircleIcon}
-						label="О приложении"
-					/>
-				</section>
-
-				<p className="text-muted-foreground px-1 text-center text-xs">
-					OpenCut — открытый видеоредактор в браузере
-				</p>
-			</main>
-
-			<MobileTabBarSpacer />
 			<MobileTabBar />
-		</div>
+		</AppFrame>
 	);
 }
 
