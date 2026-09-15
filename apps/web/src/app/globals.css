@@ -14,8 +14,8 @@
 	--card-foreground: hsl(0 0% 11%);
 	--popover: hsl(0, 0%, 100%);
 	--popover-foreground: hsl(0 0% 2%);
-	--primary: hsl(203, 100%, 50%);
-	--primary-hover: hsl(203, 100%, 45%);
+	--primary: hsl(187, 100%, 44%);
+	--primary-hover: hsl(187, 100%, 38%);
 	--primary-foreground: hsl(0, 0%, 100%);
 	--secondary: hsl(216 13% 94%);
 	--secondary-foreground: hsl(0 0% 2%);
@@ -54,9 +54,9 @@
 	--card-foreground: hsl(0 0% 89%);
 	--popover: hsl(0 0% 14.9%);
 	--popover-foreground: hsl(0 0% 98%);
-	--primary: hsl(203, 100%, 50%);
-	--primary-hover: hsl(203, 100%, 45%);
-	--primary-foreground: hsl(0 0% 9%);
+	--primary: hsl(187, 100%, 48%);
+	--primary-hover: hsl(187, 100%, 42%);
+	--primary-foreground: hsl(0 0% 6%);
 	--secondary: hsl(0 0% 14.9%);
 	--secondary-foreground: hsl(0 0% 98%);
 	--muted: hsl(0 0% 14.9%);
@@ -258,4 +258,17 @@
 	body {
 		@apply bg-background text-foreground;
 	}
+}
+
+@keyframes base-marquee {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(-50%);
+	}
+}
+
+.animate-marquee {
+	animation: base-marquee 16s linear infinite;
 }

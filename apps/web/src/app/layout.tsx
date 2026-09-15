@@ -3,7 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import { Toaster } from "../components/ui/sonner";
 import { TooltipProvider } from "../components/ui/tooltip";
-import { baseMetaData } from "./metadata";
+import { baseMetaData, baseViewport } from "./metadata";
 import { BotIdClient } from "botid/client";
 import { webEnv } from "@opencut/env/web";
 import { Inter } from "next/font/google";
@@ -11,6 +11,7 @@ import { Inter } from "next/font/google";
 const siteFont = Inter({ subsets: ["latin"] });
 
 export const metadata = baseMetaData;
+export const viewport = baseViewport;
 
 const protectedRoutes = [
 	{

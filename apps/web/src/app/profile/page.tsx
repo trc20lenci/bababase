@@ -1,12 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useTheme } from "next-themes";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
 	Folder03Icon,
-	GithubIcon,
 	InformationCircleIcon,
 	Moon02Icon,
 	Video01Icon,
@@ -50,9 +50,13 @@ export default function ProfilePage() {
 
 				<main className="flex flex-col gap-6 px-4 pb-6">
 					<div className="flex items-center gap-3">
-						<div className="bg-primary flex size-14 items-center justify-center rounded-full text-xl font-black text-white">
-							B
-						</div>
+						<Image
+							src="/icon-512.png"
+							alt=""
+							width={56}
+							height={56}
+							className="size-14 shrink-0 rounded-full"
+						/>
 						<div>
 							<p className="text-base font-semibold">Локальный профиль</p>
 							<p className="text-muted-foreground text-sm">
@@ -79,12 +83,6 @@ export default function ProfilePage() {
 					</section>
 
 					<section className="bg-card flex flex-col overflow-hidden rounded-2xl border">
-						<MenuLink
-							href={SOCIAL_LINKS.github}
-							icon={GithubIcon}
-							label="Исходный код на GitHub"
-							external
-						/>
 						<MenuLink
 							href={SOCIAL_LINKS.discord}
 							customIcon={<FaDiscord className="text-muted-foreground size-5" />}

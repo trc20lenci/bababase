@@ -11,6 +11,7 @@ import { OcVideoIcon } from "@opencut/ui/icons";
 import { useEditor } from "@/hooks/use-editor";
 import { AppFrame } from "@/components/mobile/app-frame";
 import { MobileTabBar } from "@/components/mobile/mobile-tab-bar";
+import { MarqueeBanner } from "@/components/mobile/marquee-banner";
 import { tabs, type Tab } from "@/stores/assets-panel-store";
 
 /** Editing tools surfaced as quick shortcuts — these map 1:1 to the real
@@ -76,12 +77,22 @@ export default function StudioPage() {
 		<AppFrame>
 			<div className="from-primary/25 via-primary/5 flex-1 overflow-y-auto bg-gradient-to-b to-transparent">
 				<header className="flex items-center justify-between px-4 pt-6 pb-4">
-					<div className="flex items-center gap-2">
-						<div className="bg-primary flex size-7 items-center justify-center rounded-lg text-sm font-black text-white">
-							B
-						</div>
-						<span className="text-lg font-bold tracking-tight">BASE</span>
-					</div>
+					<Image
+						src="/base-brand/logo-black.png"
+						alt="BASE"
+						width={92}
+						height={26}
+						priority
+						className="h-6 w-auto dark:hidden"
+					/>
+					<Image
+						src="/base-brand/logo-white.png"
+						alt="BASE"
+						width={92}
+						height={26}
+						priority
+						className="hidden h-6 w-auto dark:block"
+					/>
 					<Link
 						href="/projects"
 						aria-label="Поиск проектов"
@@ -92,6 +103,8 @@ export default function StudioPage() {
 				</header>
 
 				<main className="flex flex-col gap-6 px-4 pb-6">
+					<MarqueeBanner />
+
 					<div>
 						<p className="text-muted-foreground text-sm">
 							Нужно новое видео?
