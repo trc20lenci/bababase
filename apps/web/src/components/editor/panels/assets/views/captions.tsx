@@ -1,152 +1,267 @@
-import { Button } from "@/components/ui/button";
-import { PropertyGroup } from "@/components/editor/panels/properties/property-item";
-import { PanelBaseView as BaseView } from "@/components/editor/panels/panel-base-view";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import { useState, useRef } from "react";
-import { extractTimelineAudio } from "@/lib/media/mediabunny";
+	Download04Icon,
+	SparklesIcon,
+	AlertCircleIcon,
+} from "@hugeicons/core-free-icons";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { useEditor } from "@/hooks/use-editor";
-import { DEFAULT_TEXT_ELEMENT } from "@/constants/text-constants";
-import { TRANSCRIPTION_LANGUAGES } from "@/constants/transcription-constants";
-import type {
-	TranscriptionLanguage,
-	TranscriptionProgress,
-} from "@/types/transcription";
-import { transcriptionService } from "@/services/transcription/service";
-import { decodeAudioToFloat32 } from "@/lib/media/audio";
-import { buildCaptionChunks } from "@/lib/transcription/caption";
-import { Spinner } from "@/components/ui/spinner";
+import { getExportMimeType, getExportFileExtension } from "@/lib/export";
+import { DEFAULT_EXPORT_OPTIONS } from "@/constants/export-constants";
+
+type StyleOption = { id: string; name: string };
+
+type JobStatus =
+	| "idle"
+	| "exporting"
+	| "uploading"
+	| "queued"
+	| "extracting_audio"
+	| "transcribing"
+	| "generating_subtitles"
+	| "burning_in"
+	| "completed"
+	| "error";
+
+const STATUS_LABELS: Record<JobStatus, string> = {
+	idle: "",
+	exporting: "Рендерим видео...",
+	uploading: "Загружаем на сервер...",
+	queued: "В очереди...",
+	extracting_audio: "Извлекаем звук...",
+	transcribing: "Распознаём речь...",
+	generating_subtitles: "Строим субтитры...",
+	burning_in: "Встраиваем в видео...",
+	completed: "Готово!",
+	error: "Ошибка",
+};
+
+const STATUS_PROGRESS: Partial<Record<JobStatus, number>> = {
+	exporting: 5,
+	uploading: 10,
+};
 
 export function Captions() {
-	const [selectedLanguage, setSelectedLanguage] =
-		useState<TranscriptionLanguage>("auto");
-	const [isProcessing, setIsProcessing] = useState(false);
-	const [processingStep, setProcessingStep] = useState("");
-	const [error, setError] = useState<string | null>(null);
-	const containerRef = useRef<HTMLDivElement>(null);
 	const editor = useEditor();
+	const activeProject = editor.project.getActive();
 
-	const handleProgress = (progress: TranscriptionProgress) => {
-		if (progress.status === "loading-model") {
-			setProcessingStep(`Loading model ${Math.round(progress.progress)}%`);
-		} else if (progress.status === "transcribing") {
-			setProcessingStep("Transcribing...");
-		}
-	};
+	const [available, setAvailable] = useState<boolean | null>(null);
+	const [styles, setStyles] = useState<StyleOption[]>([]);
+	const [selectedStyle, setSelectedStyle] = useState<string>("classic");
+	const [position, setPosition] = useState(15);
+	const [status, setStatus] = useState<JobStatus>("idle");
+	const [progress, setProgress] = useState(0);
+	const [error, setError] = useState<string | null>(null);
+	const [jobId, setJobId] = useState<string | null>(null);
+	const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-	const handleGenerateTranscript = async () => {
-		try {
-			setIsProcessing(true);
-			setError(null);
-			setProcessingStep("Extracting audio...");
+	useEffect(() => {
+		fetch("/api/captions/styles")
+			.then((r) => r.json())
+			.then((data) => {
+				setAvailable(!!data.available);
+				if (data.styles?.length) {
+					setStyles(data.styles);
+					setSelectedStyle(data.default ?? data.styles[0].id);
+				}
+			})
+			.catch(() => setAvailable(false));
 
-			const audioBlob = await extractTimelineAudio({
-				tracks: editor.timeline.getTracks(),
-				mediaAssets: editor.media.getAssets(),
-				totalDuration: editor.timeline.getTotalDuration(),
-			});
+		return () => {
+			if (pollRef.current) clearInterval(pollRef.current);
+		};
+	}, []);
 
-			setProcessingStep("Preparing audio...");
-			const { samples } = await decodeAudioToFloat32({ audioBlob });
+	const pollStatus = (id: string) => {
+		pollRef.current = setInterval(async () => {
+			try {
+				const res = await fetch(`/api/captions/status/${id}`);
+				const data = await res.json();
 
-			const result = await transcriptionService.transcribe({
-				audioData: samples,
-				language: selectedLanguage === "auto" ? undefined : selectedLanguage,
-				onProgress: handleProgress,
-			});
+				if (!res.ok) {
+					setStatus("error");
+					setError(data.error ?? "Не удалось получить статус");
+					if (pollRef.current) clearInterval(pollRef.current);
+					return;
+				}
 
-			setProcessingStep("Generating captions...");
-			const captionChunks = buildCaptionChunks({ segments: result.segments });
+				setStatus(data.status);
+				setProgress(data.progress ?? 0);
 
-			const captionTrackId = editor.timeline.addTrack({
-				type: "text",
-				index: 0,
-			});
-
-			for (let i = 0; i < captionChunks.length; i++) {
-				const caption = captionChunks[i];
-				editor.timeline.insertElement({
-					placement: { mode: "explicit", trackId: captionTrackId },
-					element: {
-						...DEFAULT_TEXT_ELEMENT,
-						name: `Caption ${i + 1}`,
-						content: caption.text,
-						duration: caption.duration,
-						startTime: caption.startTime,
-						fontSize: 65,
-						fontWeight: "bold",
-					},
-				});
+				if (data.status === "completed" || data.status === "error") {
+					if (data.status === "error") setError(data.error);
+					if (pollRef.current) clearInterval(pollRef.current);
+				}
+			} catch {
+				setStatus("error");
+				setError("Соединение потеряно");
+				if (pollRef.current) clearInterval(pollRef.current);
 			}
-		} catch (error) {
-			console.error("Transcription failed:", error);
-			setError(
-				error instanceof Error ? error.message : "An unexpected error occurred",
-			);
-		} finally {
-			setIsProcessing(false);
-			setProcessingStep("");
+		}, 2000);
+	};
+
+	const handleGenerate = async () => {
+		if (!activeProject) return;
+		setError(null);
+		setJobId(null);
+		setProgress(0);
+
+		try {
+			setStatus("exporting");
+			const result = await editor.project.export({
+				options: {
+					...DEFAULT_EXPORT_OPTIONS,
+					format: "mp4",
+					fps: activeProject.settings.fps,
+					includeAudio: true,
+					onProgress: () => {},
+					onCancel: () => false,
+				},
+			});
+
+			if (!result.success || !result.buffer) {
+				setStatus("error");
+				setError("Не удалось отрендерить видео для субтитров");
+				return;
+			}
+
+			setStatus("uploading");
+			const mimeType = getExportMimeType({ format: "mp4" });
+			const extension = getExportFileExtension({ format: "mp4" });
+			const blob = new Blob([result.buffer], { type: mimeType });
+			const file = new File([blob], `${activeProject.metadata.name}${extension}`, {
+				type: mimeType,
+			});
+
+			const form = new FormData();
+			form.set("video", file);
+			form.set("captionStyle", selectedStyle);
+			form.set("captionPosition", String(position));
+
+			const response = await fetch("/api/captions/process", {
+				method: "POST",
+				body: form,
+			});
+			const data = await response.json();
+
+			if (!response.ok) {
+				setStatus("error");
+				setError(data.error ?? "Не удалось запустить обработку");
+				return;
+			}
+
+			setJobId(data.jobId);
+			setStatus("queued");
+			pollStatus(data.jobId);
+		} catch {
+			setStatus("error");
+			setError("Что-то пошло не так");
 		}
 	};
 
-	const handleLanguageChange = ({ value }: { value: string }) => {
-		if (value === "auto") {
-			setSelectedLanguage("auto");
-			return;
-		}
-
-		const matchedLanguage = TRANSCRIPTION_LANGUAGES.find(
-			(language) => language.code === value,
+	if (available === null) {
+		return (
+			<div className="text-muted-foreground p-6 text-center text-sm">
+				Загрузка...
+			</div>
 		);
-		if (!matchedLanguage) return;
-		setSelectedLanguage(matchedLanguage.code);
-	};
+	}
+
+	if (!available) {
+		return (
+			<div className="flex flex-col items-center gap-3 p-6 text-center">
+				<HugeiconsIcon
+					icon={AlertCircleIcon}
+					className="text-muted-foreground size-8"
+				/>
+				<p className="text-sm font-medium">Серверные субтитры не настроены</p>
+				<p className="text-muted-foreground text-xs">
+					Задайте CAPTIONS_SERVICE_URL в окружении веб-приложения, указав
+					адрес вашего captions-сервиса (apps/captions-service).
+				</p>
+			</div>
+		);
+	}
+
+	const isBusy = status !== "idle" && status !== "completed" && status !== "error";
 
 	return (
-		<BaseView
-			ref={containerRef}
-			className="flex h-full flex-col justify-between"
-		>
-			<PropertyGroup title="Language">
-				<Select
-					value={selectedLanguage}
-					onValueChange={(value) => handleLanguageChange({ value })}
-				>
-					<SelectTrigger className="bg-panel-accent h-8 w-full text-xs">
-						<SelectValue placeholder="Select a language" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="auto">Auto detect</SelectItem>
-						{TRANSCRIPTION_LANGUAGES.map((language) => (
-							<SelectItem key={language.code} value={language.code}>
-								{language.name}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-			</PropertyGroup>
-
-			<div className="flex flex-col gap-4">
-				{error && (
-					<div className="bg-destructive/10 border-destructive/20 rounded-md border p-3">
-						<p className="text-destructive text-sm">{error}</p>
-					</div>
-				)}
-
-				<Button
-					className="w-full"
-					onClick={handleGenerateTranscript}
-					disabled={isProcessing}
-				>
-					{isProcessing && <Spinner className="mr-1" />}
-					{isProcessing ? processingStep : "Generate transcript"}
-				</Button>
+		<div className="flex flex-col gap-5 p-5">
+			<div>
+				<h3 className="text-sm font-medium">Стиль субтитров</h3>
+				<div className="mt-2 grid grid-cols-3 gap-2">
+					{styles.map((style) => (
+						<button
+							key={style.id}
+							type="button"
+							disabled={isBusy}
+							onClick={() => setSelectedStyle(style.id)}
+							className={`rounded-lg border px-2 py-2.5 text-xs font-medium ${
+								selectedStyle === style.id
+									? "border-primary text-primary bg-primary/10"
+									: "border-border text-muted-foreground"
+							}`}
+						>
+							{style.name}
+						</button>
+					))}
+				</div>
 			</div>
-		</BaseView>
+
+			<div>
+				<div className="flex items-center justify-between">
+					<h3 className="text-sm font-medium">Позиция</h3>
+					<span className="text-muted-foreground text-xs">{position}% снизу</span>
+				</div>
+				<Slider
+					className="mt-2"
+					value={[position]}
+					min={5}
+					max={50}
+					step={1}
+					disabled={isBusy}
+					onValueChange={([v]) => setPosition(v)}
+				/>
+			</div>
+
+			<Button
+				type="button"
+				size="lg"
+				className="gap-2"
+				disabled={isBusy}
+				onClick={handleGenerate}
+			>
+				<HugeiconsIcon icon={SparklesIcon} className="size-4" />
+				{isBusy ? STATUS_LABELS[status] : "Создать субтитры"}
+			</Button>
+
+			{isBusy && (
+				<div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
+					<div
+						className="bg-primary h-full transition-all"
+						style={{
+							width: `${Math.max(progress, STATUS_PROGRESS[status] ?? 0)}%`,
+						}}
+					/>
+				</div>
+			)}
+
+			{status === "error" && error && (
+				<p className="text-destructive text-center text-xs">{error}</p>
+			)}
+
+			{status === "completed" && jobId && (
+				<Button asChild size="lg" variant="outline" className="gap-2">
+					<a href={`/api/captions/download/${jobId}`} download>
+						<HugeiconsIcon icon={Download04Icon} className="size-4" />
+						Скачать видео с субтитрами
+					</a>
+				</Button>
+			)}
+		</div>
 	);
 }

@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useEditor } from "@/hooks/use-editor";
+import { useElementSelection } from "@/hooks/timeline/element/use-element-selection";
 import {
 	TooltipProvider,
 	Tooltip,
@@ -83,6 +85,8 @@ function ToolbarLeftSection() {
 	const currentTime = editor.playback.getCurrentTime();
 	const isPlaying = editor.playback.getIsPlaying();
 	const currentBookmarked = editor.scenes.isBookmarked({ time: currentTime });
+	const { selectedElements } = useElementSelection();
+	const [isFreezing, setIsFreezing] = useState(false);
 
 	const handleAction = ({
 		action,
@@ -93,6 +97,40 @@ function ToolbarLeftSection() {
 	}) => {
 		event.stopPropagation();
 		invokeAction(action);
+	};
+
+	const handleFreezeFrame = async ({
+		event,
+	}: {
+		event: React.MouseEvent;
+	}) => {
+		event.stopPropagation();
+		if (selectedElements.length !== 1 || isFreezing) return;
+		const selection = selectedElements[0];
+		const resolved = editor.timeline.getElementsWithTracks({
+			elements: [selection],
+		})[0];
+		if (
+			!resolved ||
+			(resolved.element.type !== "video" && resolved.element.type !== "image")
+		) {
+			return;
+		}
+
+		const atLocalTime = currentTime - resolved.element.startTime;
+		if (atLocalTime < 0 || atLocalTime > resolved.element.duration) return;
+
+		setIsFreezing(true);
+		try {
+			await editor.timeline.insertFreezeFrame({
+				trackId: resolved.track.id,
+				elementId: resolved.element.id,
+				atLocalTime,
+				durationSeconds: 3,
+			});
+		} finally {
+			setIsFreezing(false);
+		}
 	};
 
 	return (
@@ -165,9 +203,13 @@ function ToolbarLeftSection() {
 
 				<ToolbarButton
 					icon={<HugeiconsIcon icon={SnowIcon} />}
-					tooltip="Coming soon" /* freeze frame */
-					disabled={true}
-					onClick={({ event: _event }) => {}}
+					tooltip={
+						selectedElements.length === 1
+							? "Заморозить кадр (3с)"
+							: "Выберите клип"
+					}
+					disabled={selectedElements.length !== 1 || isFreezing}
+					onClick={handleFreezeFrame}
 				/>
 
 				<ToolbarButton

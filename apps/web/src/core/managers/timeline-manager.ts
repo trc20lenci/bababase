@@ -9,6 +9,7 @@ import type {
 	TransformKeyframe,
 } from "@/types/timeline";
 import { calculateTotalDuration } from "@/lib/timeline";
+import { videoCache } from "@/services/video-cache/service";
 import {
 	AddTrackCommand,
 	RemoveTrackCommand,
@@ -23,6 +24,7 @@ import {
 	ToggleElementsMutedCommand,
 	UpdateTextElementCommand,
 	UpdateElementTransformCommand,
+	InsertFreezeFrameCommand,
 	SplitElementsCommand,
 	PasteCommand,
 	UpdateElementStartTimeCommand,
@@ -251,6 +253,88 @@ export class TimelineManager {
 		this.editor.command.execute({ command });
 	}
 
+	/**
+	 * Freezes the frame of a video element at `atLocalTime` (seconds into
+	 * the clip) for `durationSeconds`, splitting the clip and rippling
+	 * every later element on every track to make room.
+	 */
+	async insertFreezeFrame({
+		trackId,
+		elementId,
+		atLocalTime,
+		durationSeconds,
+	}: {
+		trackId: string;
+		elementId: string;
+		atLocalTime: number;
+		durationSeconds: number;
+	}): Promise<void> {
+		const track = this.getTracks().find((t) => t.id === trackId);
+		const element = track?.elements.find((el) => el.id === elementId);
+
+		if (
+			!track ||
+			!element ||
+			(element.type !== "video" && element.type !== "image")
+		) {
+			return;
+		}
+
+		const asset = this.editor.media
+			.getAssets()
+			.find((a) => a.id === element.mediaId);
+		if (!asset) return;
+
+		const clampedLocalTime = Math.max(
+			0,
+			Math.min(element.duration - 1 / 1000, atLocalTime),
+		);
+		const videoTime = clampedLocalTime + element.trimStart;
+		const splitTime = element.startTime + clampedLocalTime;
+
+		let blob: Blob;
+
+		if (element.type === "video") {
+			const frame = await videoCache.getFrameAt({
+				mediaId: asset.id,
+				file: asset.file,
+				time: videoTime,
+			});
+			if (!frame) return;
+			blob = await canvasToBlob(frame.canvas);
+		} else {
+			// Freezing a still image is just re-inserting the same image.
+			blob = asset.file;
+		}
+
+		const activeProject = this.editor.project.getActive();
+		const freezeFile = new File([blob], "freeze-frame.png", {
+			type: blob.type || "image/png",
+		});
+
+		const freezeAsset = await this.editor.media.addMediaAsset({
+			projectId: activeProject.id,
+			asset: {
+				name: "Freeze frame",
+				type: "image",
+				file: freezeFile,
+				url: URL.createObjectURL(freezeFile),
+				width: asset.width,
+				height: asset.height,
+				ephemeral: true,
+			},
+		});
+
+		const command = new InsertFreezeFrameCommand(
+			trackId,
+			elementId,
+			splitTime,
+			durationSeconds,
+			freezeAsset.id,
+		);
+		this.editor.command.execute({ command });
+	}
+
 	duplicateElements({
 		elements,
 	}: {
@@ -296,4 +380,18 @@ export class TimelineManager {
 		this.editor.scenes.updateSceneTracks({ tracks: newTracks });
 		this.notify();
 	}
+}
+
+function canvasToBlob(
+	canvas: HTMLCanvasElement | OffscreenCanvas,
+): Promise<Blob> {
+	if ("convertToBlob" in canvas) {
+		return canvas.convertToBlob({ type: "image/png" });
+	}
+	return new Promise((resolve, reject) => {
+		(canvas as HTMLCanvasElement).toBlob((blob) => {
+			if (blob) resolve(blob);
+			else reject(new Error("Failed to capture frame"));
+		}, "image/png");
+	});
 }

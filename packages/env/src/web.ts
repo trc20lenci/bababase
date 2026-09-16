@@ -27,6 +27,12 @@ const webEnvSchema = z.object({
 	R2_SECRET_ACCESS_KEY: z.string(),
 	R2_BUCKET_NAME: z.string(),
 	MODAL_TRANSCRIPTION_URL: z.url(),
+
+	// Self-hosted captions service (apps/captions-service) -- optional,
+	// the "Субтитры" feature falls back to the free client-side pipeline
+	// when these aren't set.
+	CAPTIONS_SERVICE_URL: z.url().optional(),
+	CAPTIONS_SERVICE_API_KEY: z.string().optional(),
 });
 
 export type WebEnv = z.infer<typeof webEnvSchema>;

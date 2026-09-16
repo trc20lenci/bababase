@@ -19,7 +19,7 @@ export class MediaManager {
 	}: {
 		projectId: string;
 		asset: Omit<MediaAsset, "id">;
-	}): Promise<void> {
+	}): Promise<MediaAsset> {
 		const newAsset: MediaAsset = {
 			...asset,
 			id: generateUUID(),
@@ -35,6 +35,8 @@ export class MediaManager {
 			this.assets = this.assets.filter((asset) => asset.id !== newAsset.id);
 			this.notify();
 		}
+
+		return newAsset;
 	}
 
 	async removeMediaAsset({

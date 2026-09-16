@@ -7,6 +7,7 @@ export { UpdateElementStartTimeCommand } from "./update-element-start-time";
 export { SplitElementsCommand } from "./split-elements";
 export { UpdateTextElementCommand } from "./update-text-element";
 export { UpdateElementTransformCommand } from "./update-element-transform";
+export { InsertFreezeFrameCommand } from "./insert-freeze-frame";
 export { ToggleElementsVisibilityCommand } from "./toggle-elements-visibility";
 export { ToggleElementsMutedCommand } from "./toggle-elements-muted";
 export { MoveElementCommand } from "./move-elements";

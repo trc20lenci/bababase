@@ -1,0 +1,6 @@
+flask==3.0.3
+flask-cors==4.0.1
+werkzeug==3.0.4
+faster-whisper==1.0.3
+pysubs2==1.7.3
+ctranslate2==4.4.0

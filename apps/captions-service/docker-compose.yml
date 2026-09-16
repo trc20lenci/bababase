@@ -1,0 +1,31 @@
+services:
+  captions-service:
+    build: .
+    container_name: base-captions-service
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      # CPU by default -- set WHISPER_DEVICE=cuda if this host has an
+      # NVIDIA GPU with the container toolkit installed, it's dramatically
+      # faster for anything beyond short clips.
+      WHISPER_MODEL_SIZE: ${WHISPER_MODEL_SIZE:-base}
+      WHISPER_DEVICE: ${WHISPER_DEVICE:-cpu}
+      WHISPER_COMPUTE_TYPE: ${WHISPER_COMPUTE_TYPE:-int8}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-500}
+      CAPTIONS_API_KEY: ${CAPTIONS_API_KEY:?set a shared secret so the internet can't hit this for free}
+      JOB_TTL_SECONDS: ${JOB_TTL_SECONDS:-21600}
+    volumes:
+      - captions-data:/app/data
+    # Uncomment to use an NVIDIA GPU (also requires the nvidia-container-toolkit
+    # on the host and WHISPER_DEVICE=cuda above):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  captions-data:
