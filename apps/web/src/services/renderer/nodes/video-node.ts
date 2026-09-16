@@ -1,6 +1,8 @@
 import type { CanvasRenderer } from "../canvas-renderer";
 import { BaseNode } from "./base-node";
 import { videoCache } from "@/services/video-cache/service";
+import type { Transform, TransformKeyframe } from "@/types/timeline";
+import { getTransformAtTime } from "@/lib/keyframes";
 
 const VIDEO_EPSILON = 1 / 1000;
 
@@ -10,10 +12,8 @@ export interface BaseMediaNodeParams {
 	timeOffset: number;
 	trimStart: number;
 	trimEnd: number;
-	x?: number;
-	y?: number;
-	width?: number;
-	height?: number;
+	transform?: Transform;
+	keyframes?: TransformKeyframe[];
 	opacity?: number;
 }
 
@@ -55,28 +55,31 @@ export class VideoNode extends BaseNode<VideoNodeParams> {
 				renderer.context.globalAlpha = this.params.opacity;
 			}
 
-			if (
-				this.params.x !== undefined &&
-				this.params.y !== undefined &&
-				this.params.width !== undefined &&
-				this.params.height !== undefined
-			) {
-				renderer.context.drawImage(
-					frame.canvas,
-					this.params.x,
-					this.params.y,
-					this.params.width,
-					this.params.height,
-				);
-			} else {
-				renderer.context.drawImage(
-					frame.canvas,
-					0,
-					0,
-					renderer.width,
-					renderer.height,
-				);
+			const localTime = time - this.params.timeOffset;
+			const transform = getTransformAtTime({
+				transform: this.params.transform ?? {
+					scale: 1,
+					position: { x: 0, y: 0 },
+					rotate: 0,
+				},
+				keyframes: this.params.keyframes,
+				localTime,
+			});
+
+			const width = renderer.width * transform.scale;
+			const height = renderer.height * transform.scale;
+			const x = renderer.width / 2 + transform.position.x - width / 2;
+			const y = renderer.height / 2 + transform.position.y - height / 2;
+
+			if (transform.rotate !== 0) {
+				const centerX = x + width / 2;
+				const centerY = y + height / 2;
+				renderer.context.translate(centerX, centerY);
+				renderer.context.rotate((transform.rotate * Math.PI) / 180);
+				renderer.context.translate(-centerX, -centerY);
 			}
+
+			renderer.context.drawImage(frame.canvas, x, y, width, height);
 
 			renderer.context.restore();
 		}

@@ -8,6 +8,7 @@ import { CanvasRenderer } from "@/services/renderer/canvas-renderer";
 import type { RootNode } from "@/services/renderer/nodes/root-node";
 import { buildScene } from "@/services/renderer/scene-builder";
 import { getLastFrameTime } from "@/lib/time";
+import { KeyframeGestureLayer } from "@/components/editor/mobile/keyframe-gesture-layer";
 
 function usePreviewSize() {
 	const editor = useEditor();
@@ -46,18 +47,24 @@ function RenderTreeController() {
 }
 
 export function PreviewPanel() {
+	const canvasRef = useRef<HTMLCanvasElement>(null);
+
 	return (
 		<div className="bg-panel relative flex h-full min-h-0 w-full min-w-0 flex-col rounded-sm">
-			<div className="flex min-h-0 min-w-0 flex-1 items-center justify-center p-2">
-				<PreviewCanvas />
+			<div className="relative flex min-h-0 min-w-0 flex-1 items-center justify-center p-2">
+				<PreviewCanvas canvasRef={canvasRef} />
+				<KeyframeGestureLayer canvasRef={canvasRef} />
 				<RenderTreeController />
 			</div>
 		</div>
 	);
 }
 
-function PreviewCanvas() {
-	const ref = useRef<HTMLCanvasElement>(null);
+function PreviewCanvas({
+	canvasRef,
+}: {
+	canvasRef: React.RefObject<HTMLCanvasElement | null>;
+}) {
 	const lastFrameRef = useRef(-1);
 	const lastSceneRef = useRef<RootNode | null>(null);
 	const renderingRef = useRef(false);
@@ -76,7 +83,7 @@ function PreviewCanvas() {
 	const renderTree = editor.renderer.getRenderTree();
 
 	const render = useCallback(() => {
-		if (ref.current && renderTree && !renderingRef.current) {
+		if (canvasRef.current && renderTree && !renderingRef.current) {
 			const time = editor.playback.getCurrentTime();
 			const lastFrameTime = getLastFrameTime({
 				duration: renderTree.duration,
@@ -96,20 +103,20 @@ function PreviewCanvas() {
 					.renderToCanvas({
 						node: renderTree,
 						time: renderTime,
-						targetCanvas: ref.current,
+						targetCanvas: canvasRef.current,
 					})
 					.then(() => {
 						renderingRef.current = false;
 					});
 			}
 		}
-	}, [renderer, renderTree, editor.playback]);
+	}, [renderer, renderTree, editor.playback, canvasRef]);
 
 	useRafLoop(render);
 
 	return (
 		<canvas
-			ref={ref}
+			ref={canvasRef}
 			width={width}
 			height={height}
 			className="block max-h-full max-w-full border"

@@ -5,6 +5,8 @@ import type {
 	TextElement,
 	TimelineElement,
 	ClipboardItem,
+	Transform,
+	TransformKeyframe,
 } from "@/types/timeline";
 import { calculateTotalDuration } from "@/lib/timeline";
 import {
@@ -20,6 +22,7 @@ import {
 	ToggleElementsVisibilityCommand,
 	ToggleElementsMutedCommand,
 	UpdateTextElementCommand,
+	UpdateElementTransformCommand,
 	SplitElementsCommand,
 	PasteCommand,
 	UpdateElementStartTimeCommand,
@@ -224,6 +227,27 @@ export class TimelineManager {
 		>;
 	}): void {
 		const command = new UpdateTextElementCommand(trackId, elementId, updates);
+		this.editor.command.execute({ command });
+	}
+
+	updateElementTransform({
+		trackId,
+		elementId,
+		updates,
+	}: {
+		trackId: string;
+		elementId: string;
+		updates: Partial<{
+			transform: Transform;
+			keyframes: TransformKeyframe[];
+			opacity: number;
+		}>;
+	}): void {
+		const command = new UpdateElementTransformCommand(
+			trackId,
+			elementId,
+			updates,
+		);
 		this.editor.command.execute({ command });
 	}
 

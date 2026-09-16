@@ -52,6 +52,17 @@ export interface Transform {
 	rotate: number;
 }
 
+/**
+ * A single animated transform point on an element's timeline. `time` is
+ * seconds relative to the start of the element as it sits on the timeline
+ * (0 = the moment the clip begins playing, regardless of trim/offset).
+ */
+export interface TransformKeyframe {
+	id: string;
+	time: number;
+	transform: Transform;
+}
+
 interface BaseAudioElement extends BaseTimelineElement {
 	type: "audio";
 	volume: number;
@@ -86,6 +97,7 @@ export interface VideoElement extends BaseTimelineElement {
 	muted?: boolean;
 	hidden?: boolean;
 	transform: Transform;
+	keyframes?: TransformKeyframe[];
 	opacity: number;
 }
 
@@ -94,6 +106,7 @@ export interface ImageElement extends BaseTimelineElement {
 	mediaId: string;
 	hidden?: boolean;
 	transform: Transform;
+	keyframes?: TransformKeyframe[];
 	opacity: number;
 }
 

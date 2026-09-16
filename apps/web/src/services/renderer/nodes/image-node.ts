@@ -1,6 +1,7 @@
 import type { CanvasRenderer } from "../canvas-renderer";
 import { BaseNode } from "./base-node";
 import type { BaseMediaNodeParams } from "./video-node";
+import { getTransformAtTime } from "@/lib/keyframes";
 
 const IMAGE_EPSILON = 1 / 1000;
 
@@ -60,33 +61,39 @@ export class ImageNode extends BaseNode<ImageNodeParams> {
 			renderer.context.globalAlpha = this.params.opacity;
 		}
 
-		if (
-			this.params.x !== undefined &&
-			this.params.y !== undefined &&
-			this.params.width !== undefined &&
-			this.params.height !== undefined
-		) {
-			renderer.context.drawImage(
-				this.image,
-				this.params.x,
-				this.params.y,
-				this.params.width,
-				this.params.height,
-			);
-		} else {
-			const mediaW = this.image.naturalWidth || renderer.width;
-			const mediaH = this.image.naturalHeight || renderer.height;
-			const containScale = Math.min(
-				renderer.width / mediaW,
-				renderer.height / mediaH,
-			);
-			const drawW = mediaW * containScale;
-			const drawH = mediaH * containScale;
-			const drawX = (renderer.width - drawW) / 2;
-			const drawY = (renderer.height - drawH) / 2;
+		const localTime = time - this.params.timeOffset;
+		const transform = getTransformAtTime({
+			transform: this.params.transform ?? {
+				scale: 1,
+				position: { x: 0, y: 0 },
+				rotate: 0,
+			},
+			keyframes: this.params.keyframes,
+			localTime,
+		});
 
-			renderer.context.drawImage(this.image, drawX, drawY, drawW, drawH);
+		const mediaW = this.image.naturalWidth || renderer.width;
+		const mediaH = this.image.naturalHeight || renderer.height;
+		// "cover" base size so the image fills the frame edge-to-edge at
+		// scale=1, matching how video clips fill the frame by default.
+		const coverScale = Math.max(renderer.width / mediaW, renderer.height / mediaH);
+		const baseW = mediaW * coverScale;
+		const baseH = mediaH * coverScale;
+
+		const width = baseW * transform.scale;
+		const height = baseH * transform.scale;
+		const x = renderer.width / 2 + transform.position.x - width / 2;
+		const y = renderer.height / 2 + transform.position.y - height / 2;
+
+		if (transform.rotate !== 0) {
+			const centerX = x + width / 2;
+			const centerY = y + height / 2;
+			renderer.context.translate(centerX, centerY);
+			renderer.context.rotate((transform.rotate * Math.PI) / 180);
+			renderer.context.translate(-centerX, -centerY);
 		}
+
+		renderer.context.drawImage(this.image, x, y, width, height);
 
 		renderer.context.restore();
 	}
