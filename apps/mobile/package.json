@@ -5,7 +5,8 @@
   "scripts": {
     "sync": "cap sync android",
     "open:android": "cap open android",
-    "build:android": "cd android && ./gradlew bundleRelease"
+    "build:android": "cd android && ./gradlew bundleRelease",
+    "dev:usb": "adb reverse tcp:3000 tcp:3000 && cap sync android && cap open android"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",
