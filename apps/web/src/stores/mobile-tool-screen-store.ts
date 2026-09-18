@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { Tab } from "@/stores/assets-panel-store";
 
-export type MobileToolScreenKey = "properties" | Tab;
+export type MobileToolScreenKey = "properties" | "background-removal" | Tab;
 
 interface MobileToolScreenState {
 	/** Which tool currently owns the full screen, if any. `null` means the

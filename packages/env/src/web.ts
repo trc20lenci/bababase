@@ -33,6 +33,10 @@ const webEnvSchema = z.object({
 	// when these aren't set.
 	CAPTIONS_SERVICE_URL: z.url().optional(),
 	CAPTIONS_SERVICE_API_KEY: z.string().optional(),
+
+	// Self-hosted background removal service (apps/bg-removal-service).
+	BG_REMOVAL_SERVICE_URL: z.url().optional(),
+	BG_REMOVAL_SERVICE_API_KEY: z.string().optional(),
 });
 
 export type WebEnv = z.infer<typeof webEnvSchema>;

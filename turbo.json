@@ -21,7 +21,9 @@
         "R2_BUCKET_NAME",
         "MODAL_TRANSCRIPTION_URL",
         "CAPTIONS_SERVICE_URL",
-        "CAPTIONS_SERVICE_API_KEY"
+        "CAPTIONS_SERVICE_API_KEY",
+        "BG_REMOVAL_SERVICE_URL",
+        "BG_REMOVAL_SERVICE_API_KEY"
       ]
     },
     "check-types": {

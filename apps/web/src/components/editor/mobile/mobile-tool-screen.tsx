@@ -4,6 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { useMobileToolScreenStore } from "@/stores/mobile-tool-screen-store";
 import { PropertiesPanel } from "@/components/editor/panels/properties";
+import { BackgroundRemovalView } from "@/components/editor/panels/tools/background-removal";
 import { Captions } from "@/components/editor/panels/assets/views/captions";
 import { MediaView } from "@/components/editor/panels/assets/views/media";
 import { SettingsView } from "@/components/editor/panels/assets/views/settings";
@@ -64,7 +65,12 @@ export function MobileToolScreen() {
 
 	if (!activeTool) return null;
 
-	const title = activeTool === "properties" ? "Изменить" : TITLES[activeTool];
+	const title =
+		activeTool === "properties"
+			? "Изменить"
+			: activeTool === "background-removal"
+				? "Удаление фона"
+				: TITLES[activeTool];
 
 	return (
 		<div className="bg-background absolute inset-0 z-40 flex flex-col">
@@ -82,6 +88,8 @@ export function MobileToolScreen() {
 			<div className="min-h-0 flex-1 overflow-y-auto">
 				{activeTool === "properties" ? (
 					<PropertiesPanel />
+				) : activeTool === "background-removal" ? (
+					<BackgroundRemovalView />
 				) : (
 					VIEW_MAP[activeTool]
 				)}

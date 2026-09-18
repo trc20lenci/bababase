@@ -4,7 +4,8 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Delete02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import { Delete02Icon, PlusSignIcon, EraserIcon } from "@hugeicons/core-free-icons";
+import { useMobileToolScreenStore } from "@/stores/mobile-tool-screen-store";
 import {
 	PropertyItem,
 	PropertyItemLabel,
@@ -27,6 +28,7 @@ export function VideoProperties({
 		Math.round(element.opacity * 100).toString(),
 	);
 	const { isActive, setIsActive } = useKeyframeEditorStore();
+	const { openTool } = useMobileToolScreenStore();
 	const {
 		keyframes,
 		activeKeyframeId,
@@ -77,6 +79,16 @@ export function VideoProperties({
 					</div>
 				</PropertyItemValue>
 			</PropertyItem>
+
+			<Button
+				type="button"
+				variant="outline"
+				className="w-full justify-start gap-2"
+				onClick={() => openTool({ tool: "background-removal" })}
+			>
+				<HugeiconsIcon icon={EraserIcon} className="size-4" />
+				Удалить фон
+			</Button>
 
 			<PropertyGroup title="Кейфреймы: зум и панорама">
 				<div className="flex flex-col gap-3">
