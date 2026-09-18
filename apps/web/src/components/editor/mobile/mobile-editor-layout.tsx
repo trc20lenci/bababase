@@ -3,10 +3,11 @@
 import { PreviewPanel } from "@/components/editor/panels/preview";
 import { Timeline } from "@/components/editor/timeline";
 import { MobileEditorToolbar } from "./mobile-editor-toolbar";
+import { MobileToolScreen } from "./mobile-tool-screen";
 
 export function MobileEditorLayout() {
 	return (
-		<div className="flex h-full min-h-0 w-full flex-col">
+		<div className="relative flex h-full min-h-0 w-full flex-col">
 			<div className="min-h-0 flex-1 px-2 pt-2">
 				<PreviewPanel />
 			</div>
@@ -14,6 +15,8 @@ export function MobileEditorLayout() {
 				<Timeline />
 			</div>
 			<MobileEditorToolbar />
+
+			<MobileToolScreen />
 		</div>
 	);
 }

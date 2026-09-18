@@ -9,25 +9,14 @@ import {
 	PlusSignIcon,
 	Delete02Icon,
 } from "@hugeicons/core-free-icons";
-import {
-	Drawer,
-	DrawerContent,
-	DrawerTitle,
-} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { tabs, type Tab } from "@/stores/assets-panel-store";
+import { useMobileToolScreenStore } from "@/stores/mobile-tool-screen-store";
 import { useElementSelection } from "@/hooks/timeline/element/use-element-selection";
 import { useEditor } from "@/hooks/use-editor";
 import { useKeyframeEditorStore } from "@/stores/keyframe-editor-store";
 import { useKeyframeActions } from "@/hooks/timeline/element/use-keyframe-actions";
 import { cn } from "@/utils/ui";
-import { PropertiesPanel } from "@/components/editor/panels/properties";
-import { Captions } from "@/components/editor/panels/assets/views/captions";
-import { MediaView } from "@/components/editor/panels/assets/views/media";
-import { SettingsView } from "@/components/editor/panels/assets/views/settings";
-import { SoundsView } from "@/components/editor/panels/assets/views/sounds";
-import { StickersView } from "@/components/editor/panels/assets/views/stickers";
-import { TextView } from "@/components/editor/panels/assets/views/text";
 import type { ImageElement, VideoElement } from "@/types/timeline";
 
 /** Bottom toolbar entries, mapped onto the real editing panels that already
@@ -42,48 +31,6 @@ const TOOLBAR_ITEMS: { key: Tab; label: string }[] = [
 	{ key: "captions", label: "Субтитры" },
 ];
 
-const VIEW_MAP: Record<Tab, React.ReactNode> = {
-	media: <MediaView />,
-	sounds: <SoundsView />,
-	text: <TextView />,
-	stickers: <StickersView />,
-	effects: (
-		<div className="text-muted-foreground p-6 text-center text-sm">
-			Эффекты — скоро
-		</div>
-	),
-	transitions: (
-		<div className="text-muted-foreground p-6 text-center text-sm">
-			Переходы — скоро
-		</div>
-	),
-	captions: <Captions />,
-	filters: (
-		<div className="text-muted-foreground p-6 text-center text-sm">
-			Фильтры — скоро
-		</div>
-	),
-	adjustment: (
-		<div className="text-muted-foreground p-6 text-center text-sm">
-			Коррекция — скоро
-		</div>
-	),
-	settings: <SettingsView />,
-};
-
-const TAB_TITLES: Record<Tab, string> = {
-	media: "Медиа",
-	sounds: "Звук",
-	text: "Текст",
-	stickers: "Наложение",
-	effects: "Эффекты",
-	transitions: "Переходы",
-	captions: "Субтитры",
-	filters: "Фильтры",
-	adjustment: "Коррекция",
-	settings: "Настройки",
-};
-
 function isTransformable(
 	element: { type: string } | undefined,
 ): element is VideoElement | ImageElement {
@@ -91,19 +38,19 @@ function isTransformable(
 }
 
 export function MobileEditorToolbar() {
-	const [openSheet, setOpenSheet] = useState<"properties" | Tab | null>(null);
+	const { activeTool, openTool, closeTool } = useMobileToolScreenStore();
 	const editor = useEditor();
 	const { selectedElements } = useElementSelection();
 	const hasSelection = selectedElements.length > 0;
 	const { isActive, setIsActive } = useKeyframeEditorStore();
 
-	// Close the properties sheet once keyframe editing starts so the canvas
-	// underneath becomes reachable for pan/pinch gestures.
+	// Leave whatever full-screen tool is open once keyframe editing starts
+	// so the canvas underneath becomes reachable for pan/pinch gestures.
 	useEffect(() => {
-		if (isActive) {
-			setOpenSheet(null);
+		if (isActive && activeTool) {
+			closeTool();
 		}
-	}, [isActive]);
+	}, [isActive, activeTool, closeTool]);
 
 	const selection = selectedElements.length === 1 ? selectedElements[0] : null;
 	const elementsWithTracks = selection
@@ -172,72 +119,48 @@ export function MobileEditorToolbar() {
 	}
 
 	return (
-		<>
-			<div
-				className="bg-background border-border/60 flex items-stretch border-t"
-				style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+		<div
+			className="bg-background border-border/60 flex items-stretch border-t"
+			style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+		>
+			<button
+				type="button"
+				onClick={() => openTool({ tool: "properties" })}
+				className="flex flex-1 flex-col items-center justify-center gap-1 py-2.5"
 			>
-				<button
-					type="button"
-					onClick={() => setOpenSheet("properties")}
-					className="flex flex-1 flex-col items-center justify-center gap-1 py-2.5"
+				<HugeiconsIcon
+					icon={hasSelection ? Settings05Icon : Cursor02Icon}
+					className={cn(
+						"size-5",
+						hasSelection ? "text-primary" : "text-muted-foreground",
+					)}
+				/>
+				<span
+					className={cn(
+						"text-[0.65rem] leading-none font-medium",
+						hasSelection ? "text-primary" : "text-muted-foreground",
+					)}
 				>
-					<HugeiconsIcon
-						icon={hasSelection ? Settings05Icon : Cursor02Icon}
-						className={cn(
-							"size-5",
-							hasSelection ? "text-primary" : "text-muted-foreground",
-						)}
-					/>
-					<span
-						className={cn(
-							"text-[0.65rem] leading-none font-medium",
-							hasSelection ? "text-primary" : "text-muted-foreground",
-						)}
+					Изменить
+				</span>
+			</button>
+
+			{TOOLBAR_ITEMS.map((item) => {
+				const tab = tabs[item.key];
+				return (
+					<button
+						key={item.key}
+						type="button"
+						onClick={() => openTool({ tool: item.key })}
+						className="flex flex-1 flex-col items-center justify-center gap-1 py-2.5"
 					>
-						Изменить
-					</span>
-				</button>
-
-				{TOOLBAR_ITEMS.map((item) => {
-					const tab = tabs[item.key];
-					return (
-						<button
-							key={item.key}
-							type="button"
-							onClick={() => setOpenSheet(item.key)}
-							className="flex flex-1 flex-col items-center justify-center gap-1 py-2.5"
-						>
-							<tab.icon className="text-muted-foreground size-5" />
-							<span className="text-muted-foreground text-[0.65rem] leading-none font-medium">
-								{item.label}
-							</span>
-						</button>
-					);
-				})}
-			</div>
-
-			<Drawer
-				open={openSheet !== null}
-				onOpenChange={(open) => !open && setOpenSheet(null)}
-			>
-				<DrawerContent className="max-h-[75vh]">
-					<DrawerTitle className="px-4 pt-1 pb-2 text-base">
-						{openSheet === "properties"
-							? "Изменить"
-							: openSheet
-								? TAB_TITLES[openSheet]
-								: ""}
-					</DrawerTitle>
-					<div className="min-h-0 flex-1 overflow-y-auto">
-						{openSheet === "properties" ? (
-							<PropertiesPanel />
-						) : openSheet ? (
-							VIEW_MAP[openSheet]
-						) : null}
-					</div>
-				</DrawerContent>
-			</Drawer>
-		</>
+						<tab.icon className="text-muted-foreground size-5" />
+						<span className="text-muted-foreground text-[0.65rem] leading-none font-medium">
+							{item.label}
+						</span>
+					</button>
+				);
+			})}
+		</div>
 	);
 }
