@@ -31,6 +31,7 @@ import { getActionDefinition, type TAction, invokeAction } from "@/lib/actions";
 import { useElementSelection } from "@/hooks/timeline/element/use-element-selection";
 import Image from "next/image";
 import { Filmstrip } from "./filmstrip";
+import { KeyframeMarkers } from "./keyframe-markers";
 import {
 	ScissorIcon,
 	Delete02Icon,
@@ -66,7 +67,7 @@ interface TimelineElementProps {
 	onSnapPointChange?: (snapPoint: SnapPoint | null) => void;
 	onResizeStateChange?: (params: { isResizing: boolean }) => void;
 	onElementMouseDown: (
-		e: React.MouseEvent,
+		e: React.PointerEvent,
 		element: TimelineElementType,
 	) => void;
 	onElementClick: (e: React.MouseEvent, element: TimelineElementType) => void;
@@ -248,7 +249,7 @@ function ElementInner({
 	zoomLevel: number;
 	onElementClick: (e: React.MouseEvent, element: TimelineElementType) => void;
 	onElementMouseDown: (
-		e: React.MouseEvent,
+		e: React.PointerEvent,
 		element: TimelineElementType,
 	) => void;
 	handleResizeStart: (params: {
@@ -269,7 +270,8 @@ function ElementInner({
 				type="button"
 				className="absolute inset-0 size-full cursor-pointer"
 				onClick={(e) => onElementClick(e, element)}
-				onMouseDown={(e) => onElementMouseDown(e, element)}
+				onPointerDown={(e) => onElementMouseDown(e, element)}
+				style={{ touchAction: "none" }}
 			>
 				<div className="absolute inset-0 flex h-full items-center">
 					<ElementContent
@@ -314,6 +316,11 @@ function ElementInner({
 					/>
 				</>
 			)}
+
+			{isSelected &&
+				(element.type === "video" || element.type === "image") && (
+					<KeyframeMarkers element={element} trackId={track.id} />
+				)}
 		</div>
 	);
 }

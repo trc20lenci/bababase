@@ -3,7 +3,7 @@ import {
 	useCallback,
 	useEffect,
 	useRef,
-	type MouseEvent as ReactMouseEvent,
+	type PointerEvent as ReactPointerEvent,
 	type RefObject,
 } from "react";
 import { useEditor } from "@/hooks/use-editor";
@@ -274,7 +274,7 @@ export function useElementInteraction({
 	useEffect(() => {
 		if (!dragState.isDragging && !isPendingDrag) return;
 
-		const handleMouseMove = ({ clientX, clientY }: MouseEvent) => {
+		const handleMouseMove = ({ clientX, clientY }: PointerEvent) => {
 			let startedDragThisEvent = false;
 			const timeline = timelineRef.current;
 			const scrollContainer = tracksScrollRef.current;
@@ -383,8 +383,8 @@ export function useElementInteraction({
 			}
 		};
 
-		document.addEventListener("mousemove", handleMouseMove);
-		return () => document.removeEventListener("mousemove", handleMouseMove);
+		document.addEventListener("pointermove", handleMouseMove);
+		return () => document.removeEventListener("pointermove", handleMouseMove);
 	}, [
 		dragState.isDragging,
 		dragState.clickOffsetTime,
@@ -409,7 +409,7 @@ export function useElementInteraction({
 	useEffect(() => {
 		if (!dragState.isDragging) return;
 
-		const handleMouseUp = ({ clientX, clientY }: MouseEvent) => {
+		const handleMouseUp = ({ clientX, clientY }: PointerEvent) => {
 			if (!dragState.elementId || !dragState.trackId) return;
 
 			if (mouseDownLocationRef.current) {
@@ -479,8 +479,8 @@ export function useElementInteraction({
 			onSnapPointChange?.(null);
 		};
 
-		document.addEventListener("mouseup", handleMouseUp);
-		return () => document.removeEventListener("mouseup", handleMouseUp);
+		document.addEventListener("pointerup", handleMouseUp);
+		return () => document.removeEventListener("pointerup", handleMouseUp);
 	}, [
 		dragState.isDragging,
 		dragState.elementId,
@@ -506,8 +506,8 @@ export function useElementInteraction({
 			onSnapPointChange?.(null);
 		};
 
-		document.addEventListener("mouseup", handleMouseUp);
-		return () => document.removeEventListener("mouseup", handleMouseUp);
+		document.addEventListener("pointerup", handleMouseUp);
+		return () => document.removeEventListener("pointerup", handleMouseUp);
 	}, [isPendingDrag, onSnapPointChange]);
 
 	const handleElementMouseDown = useCallback(
@@ -516,7 +516,7 @@ export function useElementInteraction({
 			element,
 			track,
 		}: {
-			event: ReactMouseEvent;
+			event: ReactPointerEvent;
 			element: TimelineElement;
 			track: TimelineTrack;
 		}) => {
@@ -540,6 +540,12 @@ export function useElementInteraction({
 
 			// left-click: stop propagation for drag operations
 			event.stopPropagation();
+			try {
+				event.currentTarget.setPointerCapture(event.pointerId);
+			} catch {
+				// Pointer capture isn't available in every environment (e.g. jsdom) --
+				// the drag still works via the document-level listeners either way.
+			}
 			mouseDownLocationRef.current = { x: event.clientX, y: event.clientY };
 
 			const isMultiSelect = event.metaKey || event.ctrlKey || event.shiftKey;
@@ -578,7 +584,7 @@ export function useElementInteraction({
 			element,
 			track,
 		}: {
-			event: ReactMouseEvent;
+			event: ReactPointerEvent;
 			element: TimelineElement;
 			track: TimelineTrack;
 		}) => {

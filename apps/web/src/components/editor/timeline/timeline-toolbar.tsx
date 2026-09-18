@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useEditor } from "@/hooks/use-editor";
 import { useElementSelection } from "@/hooks/timeline/element/use-element-selection";
+import { useKeyframeEditorStore } from "@/stores/keyframe-editor-store";
 import {
 	TooltipProvider,
 	Tooltip,
@@ -87,6 +88,18 @@ function ToolbarLeftSection() {
 	const currentBookmarked = editor.scenes.isBookmarked({ time: currentTime });
 	const { selectedElements } = useElementSelection();
 	const [isFreezing, setIsFreezing] = useState(false);
+	const { isActive: isKeyframeMode, setIsActive: setKeyframeMode } =
+		useKeyframeEditorStore();
+
+	const selectionIsTransformable = (() => {
+		if (selectedElements.length !== 1) return false;
+		const resolved = editor.timeline.getElementsWithTracks({
+			elements: [selectedElements[0]],
+		})[0];
+		return (
+			resolved?.element.type === "video" || resolved?.element.type === "image"
+		);
+	})();
 
 	const handleAction = ({
 		action,
@@ -210,6 +223,25 @@ function ToolbarLeftSection() {
 					}
 					disabled={selectedElements.length !== 1 || isFreezing}
 					onClick={handleFreezeFrame}
+				/>
+
+				<ToolbarButton
+					icon={
+						<span
+							className={`block size-2.5 rotate-45 border-2 ${
+								isKeyframeMode ? "border-primary" : "border-current"
+							}`}
+						/>
+					}
+					tooltip={
+						selectionIsTransformable
+							? "Кейфреймы: зум/пан"
+							: "Выберите видео или фото"
+					}
+					disabled={!selectionIsTransformable}
+					onClick={() =>
+						setKeyframeMode({ isActive: !isKeyframeMode })
+					}
 				/>
 
 				<ToolbarButton

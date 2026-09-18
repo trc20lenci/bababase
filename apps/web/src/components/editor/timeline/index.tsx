@@ -17,6 +17,7 @@ import {
 	ContextMenuTrigger,
 } from "../../ui/context-menu";
 import { useTimelineZoom } from "@/hooks/timeline/use-timeline-zoom";
+import { useTimelinePinchZoom } from "@/hooks/timeline/use-timeline-pinch-zoom";
 import { useState, useRef, useCallback } from "react";
 import { TimelineTrackContent } from "./timeline-track";
 import { TimelinePlayhead } from "./timeline-playhead";
@@ -109,6 +110,14 @@ export function Timeline() {
 			tracksScrollRef,
 			rulerScrollRef: tracksScrollRef,
 		});
+
+	useTimelinePinchZoom({
+		containerRef: tracksContainerRef,
+		zoomLevel,
+		setZoomLevel,
+		minZoom: minZoomLevel,
+		maxZoom: TIMELINE_CONSTANTS.ZOOM_MAX,
+	});
 
 	const {
 		dragState,

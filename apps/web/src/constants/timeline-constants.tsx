@@ -24,10 +24,10 @@ export const TRACK_COLORS: Record<TrackType, { background: string }> = {
 } as const;
 
 export const TRACK_HEIGHTS: Record<TrackType, number> = {
-	video: 60,
-	text: 25,
-	audio: 50,
-	sticker: 50,
+	video: 72,
+	text: 36,
+	audio: 56,
+	sticker: 56,
 } as const;
 
 export const TRACK_GAP = 4;
