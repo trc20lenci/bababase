@@ -21,6 +21,31 @@ export function getTimelineZoomMin({
 	return Math.min(TIMELINE_CONSTANTS.ZOOM_MAX, zoomToFit);
 }
 
+/** Zoom level that fits the whole timeline into `containerWidth` with
+ * (almost) no padding, reserving `reservedPx` for a fixed add-media button
+ * at the end of the strip. Used as the mobile default so a short clip
+ * shows in full on open instead of requiring a scroll. */
+export function getTimelineZoomFit({
+	duration,
+	containerWidth,
+	reservedPx = 56,
+}: {
+	duration: number;
+	containerWidth: number | null | undefined;
+	reservedPx?: number;
+}): number {
+	const safeDuration = Math.max(duration, 1);
+	const safeContainerWidth = Math.max(containerWidth ?? 1000, 1);
+	const availableWidth = Math.max(safeContainerWidth - reservedPx, 40);
+	const zoomToFit =
+		availableWidth / (safeDuration * TIMELINE_CONSTANTS.PIXELS_PER_SECOND);
+
+	return Math.max(
+		TIMELINE_CONSTANTS.ZOOM_MIN,
+		Math.min(TIMELINE_CONSTANTS.ZOOM_MAX, zoomToFit),
+	);
+}
+
 export function getTimelinePaddingPx({
 	containerWidth,
 	zoomLevel,

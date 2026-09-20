@@ -6,13 +6,16 @@ interface UseTimelinePinchZoomProps {
 	setZoomLevel: (zoomLevel: number | ((prev: number) => number)) => void;
 	minZoom: number;
 	maxZoom: number;
+	/** Zoom level applied on double-tap, as an escape hatch if pinch ever
+	 * leaves the timeline zoomed further than the user wants. */
+	resetZoom?: number;
 }
 
 /**
- * Two-finger pinch to zoom the timeline in/out on touch devices. Kept
- * entirely separate from the existing wheel/ctrl-based desktop zoom (both
- * just call the same `setZoomLevel`), so this can't regress desktop
- * behaviour.
+ * Two-finger pinch to zoom the timeline in/out on touch devices, plus
+ * double-tap to reset to `resetZoom`. Kept entirely separate from the
+ * existing wheel/ctrl-based desktop zoom (both just call the same
+ * `setZoomLevel`), so this can't regress desktop behaviour.
  */
 export function useTimelinePinchZoom({
 	containerRef,
@@ -20,10 +23,17 @@ export function useTimelinePinchZoom({
 	setZoomLevel,
 	minZoom,
 	maxZoom,
+	resetZoom,
 }: UseTimelinePinchZoomProps) {
 	const startDistanceRef = useRef<number | null>(null);
 	const startZoomRef = useRef(zoomLevel);
 	const zoomLevelRef = useRef(zoomLevel);
+	const lastTapRef = useRef(0);
+	const resetZoomRef = useRef(resetZoom);
+
+	useEffect(() => {
+		resetZoomRef.current = resetZoom;
+	}, [resetZoom]);
 
 	useEffect(() => {
 		zoomLevelRef.current = zoomLevel;
@@ -61,7 +71,21 @@ export function useTimelinePinchZoom({
 
 		const handleTouchEnd = (event: TouchEvent) => {
 			if (event.touches.length < 2) {
+				const wasPinching = startDistanceRef.current !== null;
 				startDistanceRef.current = null;
+
+				if (!wasPinching && event.touches.length === 0) {
+					const now = Date.now();
+					if (
+						now - lastTapRef.current < 300 &&
+						resetZoomRef.current !== undefined
+					) {
+						setZoomLevel(resetZoomRef.current);
+						lastTapRef.current = 0;
+					} else {
+						lastTapRef.current = now;
+					}
+				}
 			}
 		};
 

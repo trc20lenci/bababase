@@ -38,10 +38,12 @@ import {
 	canTracktHaveAudio,
 	canTrackBeHidden,
 	getTimelineZoomMin,
+	getTimelineZoomFit,
 	getTimelinePaddingPx,
 	isMainTrack,
 } from "@/lib/timeline";
 import { TimelineToolbar } from "./timeline-toolbar";
+import { TimelineAddButton } from "./timeline-add-button";
 import { useScrollSync } from "@/hooks/timeline/use-scroll-sync";
 import { useElementSelection } from "@/hooks/timeline/element/use-element-selection";
 import { useTimelineSeek } from "@/hooks/timeline/use-timeline-seek";
@@ -100,11 +102,19 @@ export function Timeline() {
 
 	const savedViewState = editor.project.getTimelineViewState();
 
+	const fitZoomLevel = getTimelineZoomFit({
+		duration: timelineDuration,
+		containerWidth: tracksContainerRef.current?.clientWidth,
+	});
+
 	const { zoomLevel, setZoomLevel, handleWheel, saveScrollPosition } =
 		useTimelineZoom({
 			containerRef: timelineRef,
 			minZoom: minZoomLevel,
-			initialZoom: savedViewState?.zoomLevel,
+			// Open at a zoom that fits the whole timeline on screen rather
+			// than the old default, which left short clips stretched far
+			// past the viewport and needing a long scroll.
+			initialZoom: savedViewState?.zoomLevel ?? fitZoomLevel,
 			initialScrollLeft: savedViewState?.scrollLeft,
 			initialPlayheadTime: savedViewState?.playheadTime,
 			tracksScrollRef,
@@ -117,6 +127,7 @@ export function Timeline() {
 		setZoomLevel,
 		minZoom: minZoomLevel,
 		maxZoom: TIMELINE_CONSTANTS.ZOOM_MAX,
+		resetZoom: fitZoomLevel,
 	});
 
 	const {
@@ -304,7 +315,9 @@ export function Timeline() {
 					<div
 						className="relative flex flex-1 flex-col overflow-hidden"
 						ref={tracksContainerRef}
+						style={{ touchAction: "pan-y" }}
 					>
+						<TimelineAddButton />
 						<SelectionBox
 							startPos={selectionBox?.startPos || null}
 							currentPos={selectionBox?.currentPos || null}

@@ -4,10 +4,15 @@ import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
 	Cursor02Icon,
-	Settings05Icon,
 	CheckmarkCircle02Icon,
 	PlusSignIcon,
 	Delete02Icon,
+	ArrowLeft01Icon,
+	ScissorIcon,
+	VolumeHighIcon,
+	VolumeMute02Icon,
+	Copy01Icon,
+	Settings05Icon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { tabs, type Tab } from "@/stores/assets-panel-store";
@@ -16,12 +21,12 @@ import { useElementSelection } from "@/hooks/timeline/element/use-element-select
 import { useEditor } from "@/hooks/use-editor";
 import { useKeyframeEditorStore } from "@/stores/keyframe-editor-store";
 import { useKeyframeActions } from "@/hooks/timeline/element/use-keyframe-actions";
+import { invokeAction } from "@/lib/actions/registry";
 import { cn } from "@/utils/ui";
 import type { ImageElement, VideoElement } from "@/types/timeline";
 
-/** Bottom toolbar entries, mapped onto the real editing panels that already
- * exist in the desktop editor. Nothing here is a stub — every icon opens a
- * working tool. */
+/** Bottom toolbar entries when nothing is selected — mapped onto the real
+ * editing panels that already exist in the desktop editor. */
 const TOOLBAR_ITEMS: { key: Tab; label: string }[] = [
 	{ key: "media", label: "Медиа" },
 	{ key: "sounds", label: "Звук" },
@@ -37,11 +42,41 @@ function isTransformable(
 	return element?.type === "video" || element?.type === "image";
 }
 
+function ContextButton({
+	icon,
+	label,
+	onClick,
+	destructive,
+}: {
+	icon: React.ReactNode;
+	label: string;
+	onClick: () => void;
+	destructive?: boolean;
+}) {
+	return (
+		<button
+			type="button"
+			onClick={onClick}
+			className="flex shrink-0 flex-col items-center justify-center gap-1 px-3.5 py-2.5"
+		>
+			<span className={destructive ? "text-destructive" : ""}>{icon}</span>
+			<span
+				className={cn(
+					"text-[0.65rem] leading-none font-medium whitespace-nowrap",
+					destructive ? "text-destructive" : "text-foreground",
+				)}
+			>
+				{label}
+			</span>
+		</button>
+	);
+}
+
 export function MobileEditorToolbar() {
 	const { activeTool, openTool, closeTool } = useMobileToolScreenStore();
 	const editor = useEditor();
 	const { selectedElements } = useElementSelection();
-	const hasSelection = selectedElements.length > 0;
+	const hasSelection = selectedElements.length === 1;
 	const { isActive, setIsActive } = useKeyframeEditorStore();
 
 	// Leave whatever full-screen tool is open once keyframe editing starts
@@ -118,6 +153,72 @@ export function MobileEditorToolbar() {
 		);
 	}
 
+	// A clip is selected: show its actions right in place, in the same
+	// toolbar row, instead of navigating anywhere. Matches the selected-
+	// clip toolbar in CapCut (Split / Volume / Duplicate / Effects /
+	// Delete), scrollable, with a back arrow to deselect.
+	if (hasSelection && resolved) {
+		const isMuted =
+			(resolved.element.type === "video" || resolved.element.type === "audio") &&
+			"muted" in resolved.element &&
+			!!resolved.element.muted;
+
+		return (
+			<div
+				className="bg-background border-border/60 flex items-stretch overflow-x-auto border-t"
+				style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+			>
+				<button
+					type="button"
+					onClick={() => editor.selection.setSelectedElements({ elements: [] })}
+					aria-label="Снять выделение"
+					className="text-muted-foreground flex shrink-0 items-center justify-center px-3"
+				>
+					<HugeiconsIcon icon={ArrowLeft01Icon} className="size-5" />
+				</button>
+
+				<ContextButton
+					icon={<HugeiconsIcon icon={ScissorIcon} className="size-5" />}
+					label="Разделить"
+					onClick={() => invokeAction("split")}
+				/>
+				<ContextButton
+					icon={
+						<HugeiconsIcon
+							icon={isMuted ? VolumeMute02Icon : VolumeHighIcon}
+							className="size-5"
+						/>
+					}
+					label="Громкость"
+					onClick={() => invokeAction("toggle-elements-muted-selected")}
+				/>
+				<ContextButton
+					icon={<HugeiconsIcon icon={Copy01Icon} className="size-5" />}
+					label="Дублировать"
+					onClick={() => invokeAction("duplicate-selected")}
+				/>
+				{(element?.type === "video" || element?.type === "image") && (
+					<ContextButton
+						icon={<tabs.effects.icon className="size-5" />}
+						label="Эффекты"
+						onClick={() => openTool({ tool: "effects" })}
+					/>
+				)}
+				<ContextButton
+					icon={<HugeiconsIcon icon={Settings05Icon} className="size-5" />}
+					label="Ещё"
+					onClick={() => openTool({ tool: "properties" })}
+				/>
+				<ContextButton
+					icon={<HugeiconsIcon icon={Delete02Icon} className="size-5" />}
+					label="Удалить"
+					destructive
+					onClick={() => invokeAction("delete-selected")}
+				/>
+			</div>
+		);
+	}
+
 	return (
 		<div
 			className="bg-background border-border/60 flex items-stretch border-t"
@@ -128,19 +229,8 @@ export function MobileEditorToolbar() {
 				onClick={() => openTool({ tool: "properties" })}
 				className="flex flex-1 flex-col items-center justify-center gap-1 py-2.5"
 			>
-				<HugeiconsIcon
-					icon={hasSelection ? Settings05Icon : Cursor02Icon}
-					className={cn(
-						"size-5",
-						hasSelection ? "text-primary" : "text-muted-foreground",
-					)}
-				/>
-				<span
-					className={cn(
-						"text-[0.65rem] leading-none font-medium",
-						hasSelection ? "text-primary" : "text-muted-foreground",
-					)}
-				>
+				<HugeiconsIcon icon={Cursor02Icon} className="text-muted-foreground size-5" />
+				<span className="text-muted-foreground text-[0.65rem] leading-none font-medium">
 					Изменить
 				</span>
 			</button>
